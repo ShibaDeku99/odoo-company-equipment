@@ -33,19 +33,39 @@
 Thiết bị (`company.equipment`) trải qua các trạng thái xuyên suốt vòng đời:
 
 ```mermaid
-stateDiagram-v2
-    [*] --> Available: Tạo mới (Trong kho)
-    Available --> Assigned: Cấp phát cho nhân viên
-    Assigned --> Available: Thu hồi (Tình trạng tốt)
-    Assigned --> Maintenance: Thu hồi (Cần bảo trì)
-    Assigned --> Broken: Thu hồi (Hư hỏng)
-    Assigned --> Lost: Thu hồi (Mất thiết bị)
-    Available --> Maintenance: Gửi đi bảo trì
-    Maintenance --> Available: Hoàn thành bảo trì
-    Available --> Liquidated: Quản lý phê duyệt thanh lý
-    Maintenance --> Liquidated: Quản lý phê duyệt thanh lý
-    Broken --> Liquidated: Quản lý phê duyệt thanh lý
-    Liquidated --> [*]
+flowchart TD
+    Start([⚡ Tạo mới]) --> Avail["📦 TRONG KHO (available)"]
+
+    subgraph Operation [" VẬN HÀNH & SỬ DỤNG "]
+        Avail -->|1. Cấp phát| Assign["👤 ĐANG SỬ DỤNG (assigned)"]
+        Assign -->|Thu hồi: Tốt| Avail
+    end
+
+    subgraph Incident [" SỰ CỐ & BẢO TRÌ "]
+        Avail -->|Gửi bảo trì| Maint["🔧 ĐANG SỬA CHỮA (maintenance)"]
+        Assign -->|Thu hồi: Cần bảo dưỡng| Maint
+        Maint -->|Bảo dưỡng xong| Avail
+        Assign -->|Thu hồi: Báo hỏng| Broken["⚠️ HƯ HỎNG (broken)"]
+        Assign -->|Thu hồi: Báo mất| Lost["❌ MẤT (lost)"]
+    end
+
+    subgraph EndLife [" KẾT THÚC VÒNG ĐỜI "]
+        Avail -->|Thanh lý kho| Liq["💰 ĐÃ THANH LÝ (liquidated)"]
+        Maint -->|Không thể sửa| Liq
+        Broken -->|Thanh lý xác| Liq
+        Liq --> Finish([🏁 Kết thúc])
+        Lost --> Finish
+    end
+
+    %% Định dạng màu sắc trực quan
+    style Avail fill:#2ecc71,stroke:#27ae60,stroke-width:2px,color:#fff,font-weight:bold
+    style Assign fill:#3498db,stroke:#2980b9,stroke-width:2px,color:#fff,font-weight:bold
+    style Maint fill:#f39c12,stroke:#d35400,stroke-width:2px,color:#fff,font-weight:bold
+    style Broken fill:#e67e22,stroke:#d35400,stroke-width:2px,color:#fff,font-weight:bold
+    style Lost fill:#e74c3c,stroke:#c0392b,stroke-width:2px,color:#fff,font-weight:bold
+    style Liq fill:#95a5a6,stroke:#7f8c8d,stroke-width:2px,color:#fff,font-weight:bold
+    style Start fill:#f1c40f,stroke:#f39c12,stroke-width:2px,color:#333
+    style Finish fill:#34495e,stroke:#2c3e50,stroke-width:2px,color:#fff
 ```
 
 ### Các trạng thái thiết bị (`state`):
