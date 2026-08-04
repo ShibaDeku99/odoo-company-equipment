@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Top menu item -->
+    <menuitem id="menu_equipment_root"
+              name="Quản lý thiết bị"
+              web_icon="equipment_management,static/description/icon.png"
+              sequence="10"/>
+
+    <!-- App menu -->
+    <menuitem id="menu_equipment_app"
+              name="Thiết bị"
+              parent="menu_equipment_root"
+              sequence="10"/>
+
+    <menuitem id="menu_allocation_app"
+              name="Cấp phát"
+              parent="menu_equipment_root"
+              sequence="20"/>
+
+    <menuitem id="menu_return_app"
+              name="Thu hồi"
+              parent="menu_equipment_root"
+              sequence="30"/>
+
+    <menuitem id="menu_maintenance_app"
+              name="Bảo trì"
+              parent="menu_equipment_root"
+              sequence="40"/>
+
+    <menuitem id="menu_liquidation_app"
+              name="Thanh lý"
+              parent="menu_equipment_root"
+              groups="equipment_management.group_equipment_manager"
+              sequence="50"/>
+
+    <!-- Action menu -->
+    <menuitem id="menu_equipment_action"
+              name="Danh sách thiết bị"
+              parent="menu_equipment_app"
+              action="action_company_equipment"
+              sequence="10"/>
+
+    <menuitem id="menu_allocation_action"
+              name="Phiếu cấp phát"
+              parent="menu_allocation_app"
+              action="action_company_equipment_allocation"
+              sequence="10"/>
+
+    <menuitem id="menu_return_action"
+              name="Phiếu thu hồi"
+              parent="menu_return_app"
+              action="action_company_equipment_return"
+              sequence="10"/>
+
+    <menuitem id="menu_maintenance_action"
+              name="Phiếu bảo trì"
+              parent="menu_maintenance_app"
+              action="action_company_equipment_maintenance"
+              sequence="10"/>
+
+    <menuitem id="menu_liquidation_action"
+              name="Phiếu thanh lý"
+              parent="menu_liquidation_app"
+              action="action_company_equipment_liquidation"
+              sequence="10"/>
+
+</odoo>

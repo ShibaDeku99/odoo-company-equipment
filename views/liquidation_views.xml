@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tree View -->
+    <record id="view_company_equipment_liquidation_tree" model="ir.ui.view">
+        <field name="name">company.equipment.liquidation.tree</field>
+        <field name="model">company.equipment.liquidation</field>
+        <field name="arch" type="xml">
+            <list string="Phiếu thanh lý">
+                <field name="name"/>
+                <field name="equipment_id"/>
+                <field name="date"/>
+                <field name="reason"/>
+                <field name="price" sum="Tổng thu hồi"/>
+                <field name="purchaser_name" optional="show"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'approved'" decoration-muted="state == 'cancelled'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_company_equipment_liquidation_form" model="ir.ui.view">
+        <field name="name">company.equipment.liquidation.form</field>
+        <field name="model">company.equipment.liquidation</field>
+        <field name="arch" type="xml">
+            <form string="Phiếu thanh lý">
+                <header>
+                    <button name="action_approve" string="Duyệt phiếu" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_cancel" string="Hủy phiếu" type="object" invisible="state != 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="equipment_id" readonly="state != 'draft'"/>
+                            <field name="reason" readonly="state != 'draft'"/>
+                            <field name="date" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="price" readonly="state != 'draft'"/>
+                            <field name="purchaser_name" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Ghi chú" name="note">
+                            <field name="note" readonly="state != 'draft'"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_company_equipment_liquidation" model="ir.actions.act_window">
+        <field name="name">Thanh lý thiết bị</field>
+        <field name="res_model">company.equipment.liquidation</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Tạo phiếu thanh lý thiết bị mới
+            </p>
+        </field>
+    </record>
+
+</odoo>

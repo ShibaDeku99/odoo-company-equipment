@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tree View -->
+    <record id="view_company_equipment_maintenance_tree" model="ir.ui.view">
+        <field name="name">company.equipment.maintenance.tree</field>
+        <field name="model">company.equipment.maintenance</field>
+        <field name="arch" type="xml">
+            <list string="Phiếu bảo trì">
+                <field name="name"/>
+                <field name="equipment_id"/>
+                <field name="vendor_id" optional="show"/>
+                <field name="request_date"/>
+                <field name="completion_date" optional="show"/>
+                <field name="cost" sum="Tổng chi phí"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'in_progress'" decoration-success="state == 'done'" decoration-muted="state == 'cancelled'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_company_equipment_maintenance_form" model="ir.ui.view">
+        <field name="name">company.equipment.maintenance.form</field>
+        <field name="model">company.equipment.maintenance</field>
+        <field name="arch" type="xml">
+            <form string="Phiếu bảo trì">
+                <header>
+                    <button name="action_confirm" string="Xác nhận bảo trì" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_done" string="Hoàn thành" type="object" class="oe_highlight" invisible="state != 'in_progress'"/>
+                    <button name="action_cancel" string="Hủy phiếu" type="object" invisible="state not in ('draft', 'in_progress')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="equipment_id" readonly="state != 'draft'"/>
+                            <field name="vendor_id" readonly="state == 'done'"/>
+                            <field name="cost" readonly="state == 'done'"/>
+                        </group>
+                        <group>
+                            <field name="request_date" readonly="state != 'draft'"/>
+                            <field name="completion_date" readonly="state == 'done'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Mô tả lỗi / Hạng mục bảo trì" name="description">
+                            <field name="description" readonly="state == 'done'"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_company_equipment_maintenance" model="ir.actions.act_window">
+        <field name="name">Bảo trì thiết bị</field>
+        <field name="res_model">company.equipment.maintenance</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Tạo phiếu bảo trì thiết bị mới
+            </p>
+        </field>
+    </record>
+
+</odoo>

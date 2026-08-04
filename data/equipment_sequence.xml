@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="seq_company_equipment_allocation" model="ir.sequence">
+            <field name="name">Cấp phát thiết bị</field>
+            <field name="code">company.equipment.allocation</field>
+            <field name="prefix">CP</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <record id="seq_company_equipment_return" model="ir.sequence">
+            <field name="name">Thu hồi thiết bị</field>
+            <field name="code">company.equipment.return</field>
+            <field name="prefix">TH</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <record id="seq_company_equipment_maintenance" model="ir.sequence">
+            <field name="name">Bảo trì thiết bị</field>
+            <field name="code">company.equipment.maintenance</field>
+            <field name="prefix">BT</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <record id="seq_company_equipment_liquidation" model="ir.sequence">
+            <field name="name">Thanh lý thiết bị</field>
+            <field name="code">company.equipment.liquidation</field>
+            <field name="prefix">TL</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+</odoo>

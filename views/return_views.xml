@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tree View -->
+    <record id="view_company_equipment_return_tree" model="ir.ui.view">
+        <field name="name">company.equipment.return.tree</field>
+        <field name="model">company.equipment.return</field>
+        <field name="arch" type="xml">
+            <list string="Phiếu thu hồi">
+                <field name="name"/>
+                <field name="allocation_id"/>
+                <field name="equipment_id"/>
+                <field name="employee_id"/>
+                <field name="date"/>
+                <field name="condition"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'returned'" decoration-muted="state == 'cancelled'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_company_equipment_return_form" model="ir.ui.view">
+        <field name="name">company.equipment.return.form</field>
+        <field name="model">company.equipment.return</field>
+        <field name="arch" type="xml">
+            <form string="Phiếu thu hồi">
+                <header>
+                    <button name="action_confirm" string="Xác nhận" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_cancel" string="Hủy phiếu" type="object" invisible="state != 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,returned"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="allocation_id" readonly="state != 'draft'"/>
+                            <field name="allocation_date"/>
+                            <field name="equipment_id"/>
+                            <field name="employee_id"/>
+                        </group>
+                        <group>
+                            <field name="date" readonly="state != 'draft'"/>
+                            <field name="condition" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Ghi chú" name="note">
+                            <field name="note" readonly="state != 'draft'"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_company_equipment_return" model="ir.actions.act_window">
+        <field name="name">Thu hồi thiết bị</field>
+        <field name="res_model">company.equipment.return</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Tạo phiếu thu hồi thiết bị mới
+            </p>
+        </field>
+    </record>
+
+</odoo>
