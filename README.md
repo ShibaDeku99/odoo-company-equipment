@@ -1,30 +1,17 @@
 # 🏢 Module Quản Lý Thiết Bị Doanh Nghiệp (Equipment Management)
 
-> **Module Odoo 19.0** - Giải pháp quản lý toàn diện vòng đời trang thiết bị tài sản trong doanh nghiệp (laptop, máy tính, thiết bị ngoại vi, văn phòng phẩm...), từ lúc mua sắm, cấp phát cho nhân viên, bảo dưỡng định kỳ đến thanh lý thu hồi vốn.
-
 ---
 
 ## 📑 Mục Lục
 
-1. [Tính Năng Nổi Bật](#-tính-năng-nổi-bật)
-2. [Cấu Trúc Dữ Liệu & Vòng Đời Thiết Bị](#-cấu-trúc-dữ-liệu--vòng-đời-thiết-bị)
-3. [Quy Trình & Luồng Hoạt Động (Workflows)](#-quy-trình--luồng-hoạt-động-workflows)
+1. [Cấu Trúc Dữ Liệu & Vòng Đời Thiết Bị](#-cấu-trúc-dữ-liệu--vòng-đời-thiết-bị)
+2. [Quy Trình & Luồng Hoạt Động (Workflows)](#-quy-trình--luồng-hoạt-động-workflows)
    - [1. Quản lý Hồ sơ & Khấu hao thiết bị](#1-quản-lý-hồ-sơ--khấu-hao-thiết-bị)
    - [2. Quy trình Cấp phát thiết bị](#2-quy-trình-cấp-phát-thiết-bị)
    - [3. Quy trình Thu hồi thiết bị](#3-quy-trình-thu-hồi-thiết-bị)
    - [4. Quy trình Bảo trì & Sửa chữa](#4-quy-trình-bảo-trì--sửa-chữa)
    - [5. Quy trình Thanh lý tài sản](#5-quy-trình-thanh-lý-tài-sản)
-4. [Hệ Thống Phân Quyền & Bảo Mật](#-hệ-thống-phân-quyền--bảo-mật)
-
----
-
-## 🌟 Tính Năng Nổi Bật
-
-- 💻 **Quản lý thông tin chi tiết**: Tên, mã định danh, số serial, chủng loại, ngày mua, nguyên giá.
-- 📉 **Tính khấu hao tự động**: Tự động tính tỷ lệ khấu hao hàng năm, khấu hao lũy kế theo thời gian thực và giá trị còn lại của thiết bị.
-- 🤝 **Cấp phát & Thu hồi chính xác**: Gắn liền với nhân viên (`hr.employee`), kiểm tra ràng buộc chống cấp phát trùng lặp hay thu hồi sai trạng thái.
-- 🛠️ **Nhật ký bảo trì minh bạch**: Theo dõi đơn vị sửa chữa (`res.partner`), chi phí, nguyên nhân và tiến độ khắc phục sự cố.
-- 💰 **Kiểm soát thanh lý nghiêm ngặt**: Chỉ cho phép cấp quản lý phê duyệt thanh lý các thiết bị cũ, hỏng hoặc hết khấu hao.
+3. [Hệ Thống Phân Quyền & Bảo Mật](#-hệ-thống-phân-quyền--bảo-mật)
 
 ---
 
@@ -216,6 +203,5 @@ Module áp dụng cơ chế bảo mật 3 lớp chặt chẽ của Odoo: **User 
 
 - Kế thừa toàn bộ quyền của Nhân viên Quản lý Thiết bị.
 - Nắm giữ thẩm quyền cao nhất: Phê duyệt các phiếu Thanh lý thiết bị (`company.equipment.liquidation`), định giá bán và ghi nhận bên mua.
-- Hiển thị menu chuyên biệt **"Thanh lý"**.
 
 ---
