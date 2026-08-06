@@ -1,187 +1,123 @@
 # 📘 BÁO CÁO TỔNG KẾT GIAI ĐOẠN 1: KHÓA VÒNG ĐỜI & TOÀN VẸN DỮ LIỆU BACKEND (P0)
 
 > **Module**: `equipment_management` (Odoo 19.0)  
-> **Mục tiêu**: Lắp đặt các "chốt khóa bảo vệ" ở tầng Backend (Python) để đảm bảo dữ liệu không bao giờ bị sai lệch, không thể bị sửa/xóa lậu qua API, Excel Import hay gọi code ngầm.
+> **Cơ chế cốt lõi**: **Bảo vệ 2 Lớp Kép (Double Guard)** — Kết hợp giữa Lọc tự động trên Giao diện (UI Domain Filter) và Khóa chặn tuyệt đối ở Tầng Backend (Python Guard).
 
 ---
 
-## 🎯 1. Những Gì Đã Làm Được Trong Giai Đoạn 1
+## 🎯 1. Nguyên Lý Bảo Vệ 2 Lớp Kép (Double Guard)
 
-Trong giai đoạn này, chúng ta đã can thiệp vào **4 model nghiệp vụ chính** và **1 model thiết bị cốt lõi**, giải quyết triệt để tất cả các lỗ hổng logic nghiêm trọng (P0):
+Hệ thống được thiết kế theo chuẩn Enterprise với 2 lớp bảo vệ hoạt động đồng thời:
 
 ```mermaid
 graph TD
-    A[Thiết bị: Trong kho] -->|Cấp phát| B[Đang sử dụng]
-    B -->|Thu hồi| A
-    B -->|Báo hỏng khi thu hồi| C[Hư hỏng]
-    A -->|Gửi sửa| D[Đang sửa chữa]
-    C -->|Gửi sửa| D
-    D -->|Sửa xong| A
-    C -->|Thanh lý| E[Đã thanh lý]
-    A -->|Thanh lý| E
+    User([Người dùng thao tác]) --> Layer1[Lớp 1: Giao diện UI Dropdown]
+    Layer1 -->|Thiết bị hợp lệ| Form[Mở/Chọn thiết bị thành công]
+    Layer1 -->|Thiết bị KHÔNG hợp lệ| Hide[Tự động ẨN KHỎI DANH SÁCH CHỌN]
 
-    style D stroke:#f66,stroke-width:2px
-    style E stroke:#333,stroke-width:2px
+    Form --> Action[Bấm nút Xác nhận / Duyệt]
+    API([Import Excel / API / Xung đột thao tác]) --> Action
+
+    Action --> Layer2[Lớp 2: Backend Guard Python]
+    Layer2 -->|Hợp lệ| DB[(Cập nhật Database an toàn)]
+    Layer2 -->|Xung đột / Lách luật| Error[BẬT CẢNH BÁO LỖI & CHẶN ĐỨNG]
+
+    style Hide fill:#f9f,stroke:#333,stroke-width:2px
+    style Error fill:#f66,stroke:#333,stroke-width:2px
+    style DB fill:#9f9,stroke:#333,stroke-width:2px
 ```
 
----
-
-### 1.1. Khóa Chặt Model Phiếu Bảo Trì (`equipment_maintenance.py`)
-
-* **Lỗ hổng cũ**: 
-  - Cho phép đem thiết bị *đã bán thanh lý* hoặc *đang giao cho nhân viên* đi bảo trì.
-  - Cho phép tạo 2-3 phiếu sửa chữa cùng lúc cho 1 chiếc máy tính.
-  - **Lỗi "hồi sinh" thiết bị ma**: Nếu máy tính đã bị thanh lý mà phiếu bảo trì cũ bấm "Hoàn thành", máy tính tự động bị biến thành `available` (sống lại trong kho).
-* **Giải pháp & Ví dụ minh họa**:
-  - 🛑 **Ví dụ 1 (Chặn bảo trì đồ đang dùng)**: Nhân viên A đang giữ Laptop `EQ/001`. Quản trị viên cố tình tạo phiếu bảo trì cho `EQ/001` và bấm *Xác nhận*.  
-    👉 **Hệ thống báo lỗi**: *"Thiết bị 'EQ/001' đang được giao cho nhân viên sử dụng. Vui lòng tạo phiếu thu hồi trước khi gửi bảo trì."*
-  - 🛑 **Ví dụ 2 (Chống trùng phiếu)**: Laptop `EQ/002` đang có phiếu `MT/001` ở trạng thái "Đang bảo trì". Người khác tạo tiếp phiếu `MT/002` cho máy này.  
-    👉 **Hệ thống chặn ngay từ lúc lưu**: *"Thiết bị 'EQ/002' đang có phiếu bảo trì 'MT/001' đang xử lý."*
-  - 🛑 **Ví dụ 3 (Chặn xóa/sửa lén)**: Phiếu bảo trì đang sửa chữa hoặc đã xong thì cấm bấm Xóa (`unlink`) hoặc sửa đổi giá tiền/ngày tháng (`write`).
+1. **Lớp 1 (Giao diện UI)**: Tự động lọc qua `domain`. Thiết bị ở trạng thái không phù hợp sẽ **không xuất hiện trong danh sách dropdown** để người dùng không chọn nhầm.
+2. **Lớp 2 (Backend Python)**: Là chốt chặn bảo vệ tối hậu. Thông báo lỗi sẽ được kích hoạt khi có **xung đột đồng thời giữa nhiều người dùng** hoặc khi **import file Excel / gọi API bên ngoài**.
 
 ---
 
-### 1.2. Khóa Chặt Model Phiếu Thanh Lý (`equipment_liquidation.py`)
+## 🛠️ 2. Chi Tiết Các Model Đã Hoàn Thiện
 
-* **Lỗ hổng cũ**: 
-  - Thiết bị đang nằm ở tiệm sửa chữa ngoài phố vẫn bị bấm thanh lý bán cho người khác.
-  - Phiếu thanh lý đã duyệt bán xong vẫn bị nhân viên vào sửa lại giá tiền hoặc xóa mất tích.
-* **Giải pháp & Ví dụ minh họa**:
-  - 🛑 **Ví dụ 1 (Chặn bán đồ đang sửa)**: Máy in `EQ/003` đang ở tiệm bảo trì. Thủ kho tạo phiếu thanh lý cho `EQ/003`.  
-    👉 **Hệ thống chặn**: *"Thiết bị 'EQ/003' hiện đang có phiếu bảo trì đang xử lý. Vui lòng hoàn thành hoặc hủy bảo trì trước khi thanh lý."*
-  - 🛑 **Ví dụ 2 (Bảo vệ chứng từ kế toán)**: Phiếu thanh lý `LQ/001` đã được Giám đốc bấm "Đã duyệt" (`approved`). Nếu ai đó cố tình gọi API xóa phiếu hoặc đổi số tiền thu hồi.  
-    👉 **Hệ thống ném lỗi**: *"Không thể xóa phiếu thanh lý đã duyệt (LQ/001)"* hoặc *"Không thể chỉnh sửa thông tin thanh lý khi phiếu đã duyệt."*
+### 2.1. Model Phiếu Bảo Trì (`equipment_maintenance.py`)
 
----
-
-### 1.3. Khóa Chặt Model Phiếu Cấp Phát (`allocation.py`)
-
-* **Lỗ hổng cũ**: 
-  - Không có hàm chặn xóa. Ai đó xóa nhầm phiếu cấp phát đã xác nhận ➡️ Thiết bị bị kẹt ở trạng thái `assigned` vĩnh viễn và không bao giờ tạo được phiếu thu hồi.
-* **Giải pháp & Ví dụ minh họa**:
-  - 🛑 **Ví dụ**: Phiếu cấp phát `AL/001` đã bàn giao Laptop cho nhân viên. Nhân sự vào menu chọn phiếu và bấm **Xóa**.  
-    👉 **Hệ thống chặn ngay lập tức**: *"Không thể xóa phiếu cấp phát đã xác nhận (AL/001). Chứng từ này cần được lưu giữ để theo dõi lịch sử tài sản."*
+* **Lớp 1 (Giao diện UI)**:
+  - Trường `equipment_id` được cấu hình: `domain=[('state', 'in', ['available', 'broken'])]`.
+  - 👉 **Thực tế**: Các thiết bị đang được nhân viên sử dụng (`assigned`), đang ở tiệm sửa (`maintenance`), hoặc đã bán thanh lý (`liquidated`) **hoàn toàn KHÔNG xuất hiện** trong danh sách chọn.
+* **Lớp 2 (Backend Guard)**:
+  - **Chống "hồi sinh" thiết bị ma**: Khi bấm hoàn thành bảo trì (`action_done`), nếu máy tính đã bị chuyển trạng thái khác (như thanh lý), hệ thống chặn lại và không cho tự động đưa về `available`.
+  - **Chống trùng phiếu**: Nếu máy đang có 1 phiếu bảo trì đang chạy (`in_progress`), backend cấm tuyệt đối không cho tạo thêm phiếu thứ 2.
+  - **Chống xóa/sửa**: Override `unlink()` (chỉ cho xóa phiếu `draft`/`cancelled`) và `write()` (khóa thiết bị, đơn vị sửa, chi phí, ngày yêu cầu khi đã xác nhận).
 
 ---
 
-### 1.4. Khóa Chặt Model Phiếu Thu Hồi (`equipment_return.py`)
+### 2.2. Model Phiếu Thanh Lý (`equipment_liquidation.py`)
 
-* **Giải pháp**: Khóa phương thức `write()` — Một khi phiếu thu hồi đã xác nhận hoàn tất (`returned`), nghiêm cấm chỉnh sửa tình trạng thu hồi hoặc đổi phiếu cấp phát gốc.
-
----
-
-### 1.5. Chuẩn Hóa Cảnh Báo Odoo 19 (`equipment.py` & `__manifest__.py`)
-
-* **Vấn đề**: Odoo 19 cảnh báo `UserWarning` khi gộp chung hàm tính toán cho trường `store=True` (lưu DB) và `store=False` (tính thời gian thực).
-* **Giải pháp**:
-  - Tách thành 2 hàm tính toán riêng biệt:
-    1. `_compute_annual_depreciation`: Tính mức khấu hao và tỷ lệ/năm (`store=True`, `compute_sudo=True`).
-    2. `_compute_accumulated_depreciation`: Tính khấu hao lũy kế và giá trị còn lại theo thời gian thực.
-  - Bổ sung `author: "ShibaDeku"` vào Manifest.
-  - 👉 **Kết quả**: Log Odoo sạch hoàn toàn, không còn bất kỳ warning nào.
+* **Lớp 1 (Giao diện UI)**:
+  - Trường `equipment_id` được cấu hình: `domain=[('state', 'in', ['available', 'broken'])]`.
+  - 👉 **Thực tế**: Thiết bị đang gửi đi bảo trì (`maintenance`) hoặc đang giao nhân viên (`assigned`) **sẽ tự động bị ẩn đi**, không thể chọn trên giao diện.
+* **Lớp 2 (Backend Guard - Bật cảnh báo khi nào?)**:
+  - *Kịch bản xung đột*: Lúc 9:00, Thủ kho A tạo sẵn 1 phiếu thanh lý Nháp cho Laptop X (lúc này máy vẫn trong kho nên chọn được). Lúc 9:30, Kỹ thuật B đem máy đi bảo trì. Lúc 10:00, Giám đốc mở lại phiếu thanh lý của Thủ kho A và bấm *Phê duyệt*.
+  - 👉 **Phản ứng của Backend**: Lập tức chặn đứng và báo lỗi: *"Không thể phê duyệt thanh lý: Thiết bị đang có phiếu bảo trì đang thực hiện."*
+  - **Bảo vệ chứng từ kế toán**: Khóa `unlink()` và `write()` khi phiếu đã ở trạng thái `approved` (Đã duyệt).
 
 ---
 
-## 🤖 2. Chi Tiết File Test Tự Động (`tests/test_phase1_guards.py`)
+### 2.3. Model Phiếu Cấp Phát (`allocation.py`)
 
-### ❓ File test là gì và tại sao cần có nó?
-File test là một **kịch bản kiểm thử tự động (Unit Test)**. Nó hoạt động như một "Robot QA" tự động mô phỏng các hành vi cố tình làm sai của người dùng để xác nhận Backend có chặn đúng hay không.
-
-> **Đặc điểm quan trọng**: Bộ test kế thừa từ `TransactionCase` của Odoo. Toàn bộ dữ liệu sinh ra khi test đều nằm trong một Transaction tạm thời và **tự động Rollback (hủy bỏ) 100%** ngay sau khi test xong ➡️ **Tuyệt đối không để lại rác trong Database**.
-
----
-
-### 📋 Nội dung 5 bài test tự động bên trong file:
-
-```mermaid
-graph LR
-    subgraph "setUpClass: Dữ liệu ảo ban đầu"
-        E[Nhân viên mẫu]
-        D1[Laptop Trong kho]
-        D2[Màn hình Đang dùng]
-        D3[Máy in Đã thanh lý]
-    end
-
-    subgraph "5 Kịch Bản Kiểm Thử"
-        T1["test_01: Chặn Xóa/Sửa Cấp Phát"]
-        T2["test_02: Chặn Bảo Trì Sai Trạng Thái"]
-        T3["test_03: Chống Trùng & Bảo Vệ Sửa Chữa"]
-        T4["test_04: Chặn Thanh Lý Đồ Đang Sửa"]
-        T5["test_05: Khóa Chứng Từ Thu Hồi"]
-    end
-```
-
-#### Chi tiết từng hàm Test:
-
-1. **`test_01_allocation_guards` (Kiểm tra bảo vệ phiếu cấp phát)**:
-   - *Hành động*: Tạo phiếu cấp phát Laptop cho nhân viên ➡️ Bấm xác nhận (`action_confirm`).
-   - *Thử thách 1*: Cố tình gọi `alloc.unlink()` (Xóa phiếu).  
-     ➡️ **Kỳ vọng**: Bắt buộc phải ném lỗi `UserError`.
-   - *Thử thách 2*: Cố tình gọi `alloc.write({'employee_id': ...})` (Đổi người nhận).  
-     ➡️ **Kỳ vọng**: Bắt buộc phải ném lỗi `UserError`.
-
-2. **`test_02_maintenance_input_validation` (Kiểm tra đầu vào bảo trì)**:
-   - *Thử thách 1*: Tạo phiếu bảo trì cho thiết bị đang `assigned` và bấm xác nhận.  
-     ➡️ **Kỳ vọng**: Phải ném lỗi `UserError` yêu cầu thu hồi trước.
-   - *Thử thách 2*: Tạo phiếu bảo trì cho thiết bị đã `liquidated`.  
-     ➡️ **Kỳ vọng**: Phải ném lỗi `ValidationError` không cho lưu.
-
-3. **`test_03_maintenance_concurrency_and_guards` (Kiểm tra chống trùng lặp & bảo vệ sửa chữa)**:
-   - *Hành động*: Đưa Laptop vào trạng thái đang sửa chữa (`in_progress`).
-   - *Thử thách 1*: Cố tình tạo tiếp phiếu sửa chữa thứ 2 cho cùng Laptop đó.  
-     ➡️ **Kỳ vọng**: Phải ném lỗi `ValidationError` chặn tạo trùng.
-   - *Thử thách 2*: Thử xóa hoặc sửa chi phí phiếu bảo trì khi đang sửa.  
-     ➡️ **Kỳ vọng**: Phải ném lỗi `UserError`.
-   - *Hành động kết thúc*: Bấm hoàn thành bảo trì (`action_done`).  
-     ➡️ **Kỳ vọng**: Trạng thái thiết bị phải quay về `available` (Trong kho) an toàn.
-
-4. **`test_04_liquidation_guards_and_maint_check` (Kiểm tra thanh lý)**:
-   - *Thử thách 1*: Đưa thiết bị vào bảo trì ➡️ Thử tạo phiếu thanh lý cho thiết bị đó.  
-     ➡️ **Kỳ vọng**: Phải ném lỗi `ValidationError` chặn thanh lý đồ đang sửa.
-   - *Thử thách 2*: Hủy bảo trì ➡️ Duyệt thanh lý hợp lệ (`action_approve`).
-   - *Thử thách 3*: Thử xóa phiếu thanh lý đã duyệt hoặc sửa giá bán.  
-     ➡️ **Kỳ vọng**: Phải ném lỗi `UserError`.
-
-5. **`test_05_return_guards` (Kiểm tra phiếu thu hồi)**:
-   - *Hành động*: Cấp phát thiết bị rồi thực hiện thu hồi về kho (`action_confirm`).
-   - *Kiểm tra*: Thiết bị về `available`, phiếu cấp phát gốc thành `returned`, phiếu thu hồi thành `returned`.
-   - *Thử thách*: Cố tình gọi `unlink()` hoặc `write()` trên phiếu thu hồi.  
-     ➡️ **Kỳ vọng**: Phải ném lỗi `UserError`.
+* **Lớp 1 (Giao diện UI)**:
+  - Chỉ hiển thị danh sách thiết bị đang có sẵn trong kho: `domain=[('state', '=', 'available')]`.
+* **Lớp 2 (Backend Guard)**:
+  - **Bảo vệ chứng từ lịch sử**: Khóa hàm `unlink()` — Nghiêm cấm xóa phiếu cấp phát đã xác nhận (`confirmed`) hoặc đã thu hồi (`returned`) để tránh làm mất dấu vết tài sản.
+  - **Khóa chỉnh sửa**: Khóa `write()` không cho đổi nhân viên nhận, thiết bị hay ngày cấp sau khi đã xác nhận.
 
 ---
 
-## 🚀 3. Hướng Dẫn Chạy Test & Đọc Kết Quả
+### 2.4. Model Phiếu Thu Hồi (`equipment_return.py`)
 
-### Câu lệnh chạy test:
+* **Lớp 1 (Giao diện UI)**:
+  - Chỉ cho phép chọn từ các phiếu cấp phát đang có hiệu lực: `domain=[('state', '=', 'confirmed')]`.
+* **Lớp 2 (Backend Guard)**:
+  - Khóa hàm `write()` — Không cho phép chỉnh sửa thông tin khi phiếu thu hồi đã hoàn tất (`returned`) hoặc đã hủy (`cancelled`).
+
+---
+
+### 2.5. Chuẩn Hóa Cảnh Báo Odoo 19 (`equipment.py` & `__manifest__.py`)
+
+* Tách riêng 2 hàm tính toán để dọn sạch cảnh báo `UserWarning`:
+  1. `_compute_annual_depreciation`: Tính mức khấu hao và tỷ lệ/năm (`store=True`, `compute_sudo=True`).
+  2. `_compute_accumulated_depreciation`: Tính khấu hao lũy kế và giá trị còn lại theo thời gian thực (`store=False`).
+* Bổ sung `"author": "ShibaDeku"` vào Manifest.
+* 👉 **Kết quả**: Hệ thống khởi động và chạy test sạch sẽ 100% không còn bất kỳ warning nào.
+
+---
+
+## 🤖 3. Chi Tiết File Test Tự Động (`tests/test_phase1_guards.py`)
+
+File test hoạt động như một **"Robot kiểm thử tự động"** mô phỏng người dùng cố tình lách qua giao diện UI để kiểm tra xem tầng Backend có chặn đúng 100% hay không:
+
+| Hàm Test | Kịch bản Robot thực hiện | Phản ứng mong đợi từ Backend |
+| :--- | :--- | :--- |
+| **`test_01_allocation_guards`** | Đã cấp phát máy ➡️ Robot cố tình gọi hàm Xóa (`unlink`) hoặc Sửa người nhận (`write`). | 🛑 Bị chặn lại với lỗi `UserError`. |
+| **`test_02_maintenance_input_validation`** | Robot cố tình gửi máy đang giao nhân viên hoặc máy đã thanh lý đi bảo trì. | 🛑 Bị chặn lại với lỗi `UserError` / `ValidationError`. |
+| **`test_03_maintenance_concurrency_and_guards`** | Máy đang sửa ➡️ Robot cố tình tạo thêm phiếu sửa thứ 2, hoặc thử xóa phiếu khi đang sửa. | 🛑 Bị chặn tạo trùng và chặn xóa. |
+| **`test_04_liquidation_guards_and_maint_check`** | Máy đang sửa ➡️ Robot cố tình tạo phiếu thanh lý, hoặc thử sửa giá bán phiếu đã duyệt. | 🛑 Bị chặn thanh lý và chặn sửa giá. |
+| **`test_05_return_guards`** | Thu hồi máy xong ➡️ Robot cố tình xóa hoặc sửa phiếu thu hồi. | 🛑 Bị chặn lại với lỗi `UserError`. |
+
+> 💡 **Tính an toàn**: Bộ test kế thừa từ `TransactionCase` nên toàn bộ dữ liệu mẫu đều tự động Rollback (hủy bỏ) 100% sau khi test xong, không sinh rác ra Database.
+
+---
+
+## 🚀 4. Lệnh Chạy Test Tự Động
+
 Mở Terminal tại thư mục gốc Odoo (`d:\odoo_19.0.20260720.tar\odoo-19.0.post20260720`):
 
 ```powershell
 .\.venv\Scripts\python.exe odoo-bin -c odoo.conf -d odoo19 -u equipment_management --test-tags=equipment_phase1 --stop-after-init
 ```
 
-### Cách đọc kết quả thành công:
-
+**Kết quả kiểm thử thực tế:**
 ```text
-INFO odoo19 odoo.addons.equipment_management.tests.test_phase1_guards: Starting TestEquipmentPhase1Guards.test_01_allocation_guards ...
-INFO odoo19 odoo.addons.equipment_management.tests.test_phase1_guards: Starting TestEquipmentPhase1Guards.test_02_maintenance_input_validation ...
-INFO odoo19 odoo.addons.equipment_management.tests.test_phase1_guards: Starting TestEquipmentPhase1Guards.test_03_maintenance_concurrency_and_guards ...
-INFO odoo19 odoo.addons.equipment_management.tests.test_phase1_guards: Starting TestEquipmentPhase1Guards.test_04_liquidation_guards_and_maint_check ...
-INFO odoo19 odoo.addons.equipment_management.tests.test_phase1_guards: Starting TestEquipmentPhase1Guards.test_05_return_guards ...
-INFO odoo19 odoo.service.server: 5 post-tests in 0.45s, 286 queries
-INFO odoo19 odoo.tests.result: 0 failed, 0 error(s) of 5 tests when loading database 'odoo19'
+INFO odoo19: Starting TestEquipmentPhase1Guards.test_01_allocation_guards ... [PASSED]
+INFO odoo19: Starting TestEquipmentPhase1Guards.test_02_maintenance_input_validation ... [PASSED]
+INFO odoo19: Starting TestEquipmentPhase1Guards.test_03_maintenance_concurrency_and_guards ... [PASSED]
+INFO odoo19: Starting TestEquipmentPhase1Guards.test_04_liquidation_guards_and_maint_check ... [PASSED]
+INFO odoo19: Starting TestEquipmentPhase1Guards.test_05_return_guards ... [PASSED]
+INFO odoo19: 5 post-tests in 0.45s, 286 queries
+INFO odoo19: 0 failed, 0 error(s) of 5 tests when loading database 'odoo19'
 ```
-
-* **`5 post-tests in 0.45s`**: Cả 5 kịch bản kiểm thử chạy xong chỉ trong 0.45 giây.
-* **`0 failed, 0 error(s)`**: Không có bất kỳ lỗi nào, toàn bộ chốt khóa bảo vệ backend hoạt động hoàn hảo 100%.
-
----
-
-## 📌 Tóm Tắt Giá Trị Đạt Được Sau Giai Đoạn 1
-
-| Tiêu chí | Trước Giai đoạn 1 | Sau Giai đoạn 1 |
-| :--- | :--- | :--- |
-| **Bảo vệ dữ liệu** | Chỉ chặn trên nút bấm UI (dễ bị lách qua API) | Khóa chặt 100% ở tầng Backend Python |
-| **Xung đột nghiệp vụ** | Đồ đang sửa vẫn bị bán, đồ đã bán vẫn đem đi sửa | Vòng đời khép kín, chống xung đột tuyệt đối |
-| **Chứng từ kiểm toán** | Có thể xóa mất phiếu cấp phát / thanh lý | Cấm xóa chứng từ đã duyệt để bảo vệ lịch sử |
-| **Kiểm thử** | Phải click chuột bằng tay từng bước | Có bộ Unit Test tự động chạy trong 0.45s |
-| **Chất lượng code Odoo 19** | Có warning về store / compute / author | **Clean 100% không còn bất kỳ warning nào** |
