@@ -68,8 +68,8 @@ class CompanyEquipmentLiquidation(models.Model):
             if not record.equipment_id:
                 continue
 
-            # 1. Không thể thanh lý thiết bị đang có người dùng, đã mất hoặc đã thanh lý rồi
-            if record.equipment_id.state in ['assigned', 'liquidated', 'lost']:
+            # 1. Không thể thanh lý thiết bị đang có người dùng, đã mất hoặc đã thanh lý rồi (kiểm tra ở trạng thái nháp)
+            if record.state == 'draft' and record.equipment_id.state in ['assigned', 'liquidated', 'lost']:
                 raise ValidationError(_(
                     "Không thể thanh lý thiết bị '%s' vì thiết bị đang ở trạng thái '%s'."
                 ) % (record.equipment_id.display_name, record.equipment_id.state))

@@ -76,7 +76,7 @@ class CompanyEquipmentMaintenance(models.Model):
                     ) % (record.equipment_id.display_name, active_maintenance.name))
 
             # 2. Không cho phép tạo bảo trì đối với thiết bị đã thanh lý hoặc đã mất
-            if record.equipment_id.state in ['liquidated', 'lost']:
+            if record.state in ['draft', 'in_progress'] and record.equipment_id.state in ['liquidated', 'lost']:
                 raise ValidationError(_(
                     "Không thể đưa thiết bị '%s' vào bảo trì vì thiết bị đã ở trạng thái '%s'."
                 ) % (record.equipment_id.display_name, record.equipment_id.state))
