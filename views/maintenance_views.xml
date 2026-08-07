@@ -47,6 +47,7 @@
                         <group>
                             <field name="request_date" readonly="state != 'draft'"/>
                             <field name="completion_date" readonly="state == 'done'"/>
+                            <field name="return_id" readonly="1" invisible="not return_id"/>
                         </group>
                     </group>
                     <notebook>
@@ -55,6 +56,7 @@
                         </page>
                     </notebook>
                 </sheet>
+                <chatter/>
             </form>
         </field>
     </record>

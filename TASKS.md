@@ -22,7 +22,7 @@
 - [X] **1.1 Khóa chặt Model Phiếu Bảo Trì (`models/equipment_maintenance.py`)**
 
   - [X] Thêm validation kiểm tra trạng thái đầu vào của thiết bị: Chỉ cho phép tạo bảo trì khi thiết bị ở trạng thái `available` (Trong kho) hoặc `broken` (Hư hỏng).
-  - [X] Chặn đưa thiết bị đang `assigned` (Đang sử dụng), `liquidated` (Đã thanh lý) hoặc `lost` (Mất) vào phiếu bảo trì.
+  - [X] Chặn đưe st thiết bị đang `assigned` (Đang sử dụng), `liquidated` (Đã thanh lý) hoặc `lost` (Mất) vào phiếu bảo trì.
   - [X] Chống trùng lặp: Ngăn chặn tạo/xác nhận nhiều phiếu bảo trì đang chạy (`in_progress`) cho cùng 1 thiết bị.
   - [X] Chống "hồi sinh" thiết bị: Khi hoàn thành bảo trì (`action_done`), kiểm tra nếu thiết bị đã bị chuyển trạng thái khác ngoài `maintenance` (như đã thanh lý) thì báo lỗi và dừng thực thi.
   - [X] Bổ sung Backend Guard `unlink()`: Chỉ cho phép xóa phiếu ở trạng thái `draft` hoặc `cancelled`.
@@ -71,17 +71,20 @@
 
 ### Giai đoạn 3: Tự Động Hóa Nghiệp Vụ & Audit Trail Chatter (P1)
 
-- [ ] **3.1 Tự động tạo Phiếu Bảo Trì từ Phiếu Thu Hồi**
+- [X] **3.1 Tự động tạo Phiếu Bảo Trì từ Phiếu Thu Hồi**
 
-  - [ ] Khi xác nhận thu hồi (`action_confirm`) với tình trạng `condition == 'maintenance'`, tự động tạo 1 phiếu `company.equipment.maintenance` ở trạng thái Nháp.
-  - [ ] Ghi nhận liên kết giữa phiếu Thu hồi và phiếu Bảo trì vừa tạo.
-  - [ ] Thêm Smart button trên Form Thu hồi để điều hướng nhanh đến Phiếu bảo trì tương ứng.
-- [ ] **3.2 Kế thừa Module Mail & Tích Hợp Chatter**
+  - [X] Khi xác nhận thu hồi (`action_confirm`) với tình trạng `condition == 'maintenance'`, tự động tạo 1 phiếu `company.equipment.maintenance` ở trạng thái Nháp.
+  - [X] Ghi nhận liên kết giữa phiếu Thu hồi và phiếu Bảo trì vừa tạo (`return_id`, `maintenance_ids`).
+  - [X] Thêm Smart button trên Form Thu hồi (`action_view_maintenance`) để điều hướng nhanh đến Phiếu bảo trì tương ứng.
+- [X] **3.2 Kế thừa Module Mail & Tích Hợp Chatter**
 
-  - [ ] Cập nhật `__manifest__.py`: Thêm `"mail"` vào danh sách `"depends"`.
-  - [ ] Thêm kế thừa `_inherit = ['mail.thread', 'mail.activity.mixin']` cho tất cả 5 models.
-  - [ ] Bật tính năng `tracking=True` cho các trường quan trọng (`state`, `employee_id`, `cost`, `price`, `vendor_id`).
-  - [ ] Cập nhật toàn bộ các file Form view trong `views/*.xml`: Thêm component `<chatter/>` chuẩn Odoo 19.
+  - [X] Cập nhật `__manifest__.py`: Thêm `"mail"` vào danh sách `"depends"`.
+  - [X] Thêm kế thừa `_inherit = ['mail.thread', 'mail.activity.mixin']` cho tất cả 5 models.
+  - [X] Bật tính năng `tracking=True` cho các trường quan trọng (`state`, `employee_id`, `cost`, `price`, `vendor_id`).
+  - [X] Cập nhật toàn bộ các file Form view trong `views/*.xml`: Thêm component `<chatter/>` chuẩn Odoo 19.
+- [X] **3.3 Xây dựng Bộ Test Tự Động Giai Đoạn 3**
+
+  - [X] `tests/test_phase3_automation_chatter.py`: Test tự động sinh phiếu bảo trì, Smart button và kiểm tra kế thừa mail.thread & mail.activity.mixin.
 
 ---
 

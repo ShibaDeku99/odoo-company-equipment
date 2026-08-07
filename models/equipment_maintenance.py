@@ -3,6 +3,7 @@ from odoo.exceptions import UserError, ValidationError
 
 class CompanyEquipmentMaintenance(models.Model):
     _name = "company.equipment.maintenance"
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Phiếu bảo trì thiết bị"
     _rec_name = "name"
 
@@ -11,6 +12,7 @@ class CompanyEquipmentMaintenance(models.Model):
         required=True, 
         copy=False, 
         readonly=True, 
+        tracking=True,
         default=lambda self: _('New')
     )
 
@@ -38,27 +40,40 @@ class CompanyEquipmentMaintenance(models.Model):
         'company.equipment', 
         string="Thiết bị", 
         required=True,
-        domain=[('state', 'in', ['available', 'broken'])]
+        tracking=True,
+        domain=[('state', 'in', ['available', 'broken', 'maintenance'])]
+    )
+
+    return_id = fields.Many2one(
+        'company.equipment.return',
+        string="Phiếu thu hồi gốc",
+        readonly=True,
+        copy=False,
+        help="Phiếu thu hồi đã tự động tạo phiếu bảo trì này"
     )
     
     vendor_id = fields.Many2one(
         'res.partner',
-        string="Đơn vị sửa chữa"
+        string="Đơn vị sửa chữa",
+        tracking=True
     )
     
     request_date = fields.Date(
         string="Ngày yêu cầu", 
         required=True, 
+        tracking=True,
         default=fields.Date.context_today
     )
     
     completion_date = fields.Date(
-        string="Ngày hoàn thành"
+        string="Ngày hoàn thành",
+        tracking=True
     )
     
     cost = fields.Monetary(
         string="Chi phí sửa chữa",
         currency_field='currency_id',
+        tracking=True
     )
     
     description = fields.Text(
@@ -74,7 +89,8 @@ class CompanyEquipmentMaintenance(models.Model):
         ], 
         string="Trạng thái", 
         default='draft', 
-        required=True
+        required=True,
+        tracking=True
     )
 
     @api.constrains('cost', 'request_date', 'completion_date')
@@ -206,14 +222,13 @@ class CompanyEquipmentMaintenance(models.Model):
 
     def write(self, vals):
         """Khóa không cho chỉnh sửa các trường cốt lõi khi phiếu đã xác nhận hoặc hoàn thành."""
-        protected_fields = {'equipment_id', 'vendor_id', 'request_date', 'cost'}
         for record in self:
             if record.state in ['in_progress', 'done', 'cancelled']:
-                modified_protected = set(vals.keys()) & protected_fields
-                if modified_protected:
-                    raise UserError(_(
-                        "Không thể chỉnh sửa các thông tin bảo trì (%s) khi phiếu đã xác nhận hoặc hoàn thành."
-                    ) % ", ".join(modified_protected))
+                if {'equipment_id', 'request_date'} & set(vals.keys()):
+                    raise UserError(_("Không thể chỉnh sửa Thiết bị hoặc Ngày yêu cầu khi phiếu bảo trì đã xác nhận."))
+            if record.state in ['done', 'cancelled']:
+                if {'cost', 'vendor_id', 'completion_date'} & set(vals.keys()):
+                    raise UserError(_("Không thể chỉnh sửa Chi phí hoặc Đơn vị sửa chữa khi phiếu bảo trì đã hoàn tất hoặc đã hủy."))
         return super().write(vals)
 
     def unlink(self):

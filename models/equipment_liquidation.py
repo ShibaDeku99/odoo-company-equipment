@@ -3,6 +3,7 @@ from odoo.exceptions import UserError, ValidationError
 
 class CompanyEquipmentLiquidation(models.Model):
     _name = "company.equipment.liquidation"
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Phiếu thanh lý thiết bị"
     _rec_name = "name"
 
@@ -11,6 +12,7 @@ class CompanyEquipmentLiquidation(models.Model):
         required=True, 
         copy=False, 
         readonly=True, 
+        tracking=True,
         default=lambda self: _('New')
     )
 
@@ -38,12 +40,14 @@ class CompanyEquipmentLiquidation(models.Model):
         'company.equipment', 
         string="Thiết bị", 
         required=True,
+        tracking=True,
         domain=[('state', 'in', ['available', 'broken'])]
     )
     
     date = fields.Date(
         string="Ngày thanh lý", 
         required=True, 
+        tracking=True,
         default=fields.Date.context_today
     )
     
@@ -61,10 +65,12 @@ class CompanyEquipmentLiquidation(models.Model):
     price = fields.Monetary(
         string="Giá thanh lý / Số tiền thu hồi",
         currency_field='currency_id',
+        tracking=True,
     )
     
     purchaser_name = fields.Char(
-        string="Người / Đơn vị mua"
+        string="Người / Đơn vị mua",
+        tracking=True,
     )
     
     note = fields.Text(
@@ -79,7 +85,8 @@ class CompanyEquipmentLiquidation(models.Model):
         ], 
         string="Trạng thái", 
         default='draft', 
-        required=True
+        required=True,
+        tracking=True
     )
 
     @api.constrains('price')

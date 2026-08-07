@@ -3,6 +3,7 @@ from odoo.exceptions import UserError, ValidationError
 
 class CompanyEquipmentAllocation(models.Model):
     _name = "company.equipment.allocation"
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Phiếu cấp phát thiết bị"
     _rec_name = "name"
 
@@ -11,6 +12,7 @@ class CompanyEquipmentAllocation(models.Model):
         required=True,
         copy=False,
         readonly=True,
+        tracking=True,
         default=lambda self: _('New'),
     )
 
@@ -25,18 +27,21 @@ class CompanyEquipmentAllocation(models.Model):
         'hr.employee',
         string="Nhân viên nhận",
         required=True,
+        tracking=True,
     )
 
     equipment_id = fields.Many2one(
         'company.equipment',
         string="Thiết bị",
         required=True,
+        tracking=True,
         domain=[('state', '=', 'available')],
     )
 
     date = fields.Date(
         string="Ngày cấp",
         required=True,
+        tracking=True,
         default=fields.Date.context_today,
     )
 
@@ -49,6 +54,7 @@ class CompanyEquipmentAllocation(models.Model):
         string="Trạng thái",
         default='draft',
         required=True,
+        tracking=True,
     )
 
     note = fields.Text(

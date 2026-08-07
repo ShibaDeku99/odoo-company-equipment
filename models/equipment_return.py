@@ -3,6 +3,7 @@ from odoo.exceptions import UserError, ValidationError
 
 class CompanyEquipmentReturn(models.Model):
     _name = "company.equipment.return"
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Phiếu thu hồi thiết bị"
     _rec_name = "name"
 
@@ -11,6 +12,7 @@ class CompanyEquipmentReturn(models.Model):
         required=True, 
         copy=False, 
         readonly=True, 
+        tracking=True,
         default=lambda self: _('New')
     )
 
@@ -25,6 +27,7 @@ class CompanyEquipmentReturn(models.Model):
         'company.equipment.allocation', 
         string="Phiếu cấp phát", 
         required=True,
+        tracking=True,
         domain=[('state', '=', 'confirmed')]
     )
     
@@ -53,6 +56,7 @@ class CompanyEquipmentReturn(models.Model):
     date = fields.Date(
         string="Ngày thu hồi", 
         required=True, 
+        tracking=True,
         default=fields.Date.context_today
     )
     
@@ -65,6 +69,7 @@ class CompanyEquipmentReturn(models.Model):
         ], 
         string="Tình trạng khi thu hồi", 
         required=True, 
+        tracking=True,
         default='good'
     )
     
@@ -78,8 +83,37 @@ class CompanyEquipmentReturn(models.Model):
         ], 
         string="Trạng thái", 
         default='draft', 
-        required=True
+        required=True,
+        tracking=True
     )
+
+    maintenance_ids = fields.One2many(
+        'company.equipment.maintenance',
+        'return_id',
+        string="Phiếu bảo trì liên quan"
+    )
+
+    maintenance_count = fields.Integer(
+        string="Số phiếu bảo trì",
+        compute='_compute_maintenance_count'
+    )
+
+    @api.depends('maintenance_ids')
+    def _compute_maintenance_count(self):
+        for record in self:
+            record.maintenance_count = len(record.maintenance_ids)
+
+    def action_view_maintenance(self):
+        """Hàm điều hướng Smart Button từ Phiếu thu hồi sang Phiếu bảo trì liên quan."""
+        self.ensure_one()
+        action = self.env["ir.actions.actions"]._for_xml_id("equipment_management.action_company_equipment_maintenance")
+        if len(self.maintenance_ids) == 1:
+            form_view_id = self.env.ref('equipment_management.view_company_equipment_maintenance_form').id
+            action['views'] = [(form_view_id, 'form')]
+            action['res_id'] = self.maintenance_ids[0].id
+        else:
+            action['domain'] = [('id', 'in', self.maintenance_ids.ids)]
+        return action
 
     @api.constrains('date', 'allocation_id')
     def _check_date(self):
@@ -120,6 +154,7 @@ class CompanyEquipmentReturn(models.Model):
         - Cập nhật trạng thái mới của thiết bị theo tình trạng thực tế nhận lại (Tốt -> Trong kho, Hỏng/Mất/Bảo trì).
         - Gỡ thông tin người dùng và ngày bàn giao trên thiết bị.
         - Đổi trạng thái phiếu cấp phát sang 'Đã thu hồi' (returned).
+        - Tự động tạo 1 Phiếu Bảo Trì (draft) nếu tình trạng là 'Cần bảo trì' (maintenance).
         - Đổi trạng thái phiếu thu hồi này sang 'Đã thu hồi' (returned).
         """
         for record in self:
@@ -149,8 +184,24 @@ class CompanyEquipmentReturn(models.Model):
             record.allocation_id.write({
                 'state': 'returned'
             })
+
+            # 3. Tự động sinh Phiếu Bảo Trì nếu cần bảo trì
+            if record.condition == 'maintenance':
+                desc_text = _("Tự động tạo từ phiếu thu hồi %s.") % record.name
+                if record.note:
+                    desc_text += _(" Ghi chú lỗi: %s") % record.note
+                
+                self.env['company.equipment.maintenance'].create({
+                    'equipment_id': record.equipment_id.id,
+                    'request_date': record.date or fields.Date.context_today(record),
+                    'description': desc_text,
+                    'company_id': record.company_id.id,
+                    'currency_id': record.equipment_id.currency_id.id,
+                    'return_id': record.id,
+                    'state': 'draft',
+                })
             
-            # 3. Cập nhật phiếu thu hồi
+            # 4. Cập nhật phiếu thu hồi
             record.write({'state': 'returned'})
 
     def action_cancel(self):

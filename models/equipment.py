@@ -4,6 +4,7 @@ from odoo.exceptions import ValidationError, UserError
 
 class CompanyEquipment(models.Model):
     _name = "company.equipment"
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Thiết bị công ty"
     _rec_name = "name"
 
@@ -15,19 +16,23 @@ class CompanyEquipment(models.Model):
     name = fields.Char(
         string="Tên thiết bị",
         required=True,
+        tracking=True,
     )
 
     code = fields.Char(
         string="Mã thiết bị",
         required=True,
+        tracking=True,
     )
 
     serial_number = fields.Char(
         string="Số serial",
+        tracking=True,
     )
 
     category = fields.Char(
         string="Loại thiết bị",
+        tracking=True,
     )
 
     company_id = fields.Many2one(
@@ -52,11 +57,13 @@ class CompanyEquipment(models.Model):
 
     purchase_date = fields.Date(
         string="Ngày mua",
+        tracking=True,
     )
 
     purchase_price = fields.Monetary(
         string="Giá mua",
         currency_field='currency_id',
+        tracking=True,
     )
 
     state = fields.Selection(
@@ -71,6 +78,7 @@ class CompanyEquipment(models.Model):
         string="Trạng thái",
         default="available",
         required=True,
+        tracking=True,
     )
 
     note = fields.Text(
@@ -82,6 +90,7 @@ class CompanyEquipment(models.Model):
         'hr.employee',
         string="Người sử dụng",
         readonly=True,
+        tracking=True,
     )
 
     allocation_date = fields.Date(
