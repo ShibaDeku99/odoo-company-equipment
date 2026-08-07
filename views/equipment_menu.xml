@@ -8,26 +8,34 @@
               sequence="10"/>
 
     <!-- App menu -->
+    <!-- Thiết bị: Dành cho tất cả nhân viên (Record rule sẽ tự lọc thiết bị cá nhân đối với nhân viên thường) -->
     <menuitem id="menu_equipment_app"
               name="Thiết bị"
               parent="menu_equipment_root"
               sequence="10"/>
 
+    <!-- Cấp phát: Dành cho Nhân viên Quản lý thiết bị trở lên -->
     <menuitem id="menu_allocation_app"
               name="Cấp phát"
               parent="menu_equipment_root"
+              groups="equipment_management.group_equipment_user"
               sequence="20"/>
 
+    <!-- Thu hồi: Dành cho Nhân viên Quản lý thiết bị trở lên -->
     <menuitem id="menu_return_app"
               name="Thu hồi"
               parent="menu_equipment_root"
+              groups="equipment_management.group_equipment_user"
               sequence="30"/>
 
+    <!-- Bảo trì: Dành cho Nhân viên Quản lý thiết bị trở lên -->
     <menuitem id="menu_maintenance_app"
               name="Bảo trì"
               parent="menu_equipment_root"
+              groups="equipment_management.group_equipment_user"
               sequence="40"/>
 
+    <!-- Thanh lý: Dành riêng cho Quản lý cấp cao (Manager) -->
     <menuitem id="menu_liquidation_app"
               name="Thanh lý"
               parent="menu_equipment_root"

@@ -9,8 +9,8 @@
 
 - [X] **Giai đoạn 1: Khóa Vòng Đời & Toàn Vẹn Dữ Liệu ở Backend (Ưu tiên P0)**
 - [X] **Giai đoạn 2: Ràng Buộc Dữ Liệu & Chuẩn Tiền Tệ (Ưu tiên P1)**
-- [ ] **Giai đoạn 3: Tự Động Hóa Nghiệp Vụ & Audit Trail Chatter (Ưu tiên P1)**
-- [ ] **Giai đoạn 4: Chuẩn Hóa Phân Quyền & Cú Pháp Odoo 19**
+- [X] **Giai đoạn 3: Tự Động Hóa Nghiệp Vụ & Audit Trail Chatter (Ưu tiên P1)**
+- [X] **Giai đoạn 4: Chuẩn Hóa Phân Quyền & Cú Pháp Odoo 19**
 - [ ] **Giai đoạn 5: Xây Dựng Bộ Test Tự Động Toàn Diện (Automated Unit Tests)**
 
 ---
@@ -90,13 +90,26 @@
 
 ### Giai đoạn 4: Chuẩn Hóa Phân Quyền & Cú Pháp Odoo 19
 
-- [ ] **4.1 Cập nhật Phân Quyền XML (`security/equipment_security.xml`)**
+- [X] **4.1 Cập nhật Phân Quyền XML (`security/equipment_security.xml`)**
 
-  - [ ] Đổi toàn bộ cú pháp Many2many tuple cũ `[(4, ref(...))]` sang chuẩn Odoo 19: `eval="[Command.link(ref(...))]"` (với `from odoo import Command`).
-  - [ ] Rà soát Record Rules của nhân viên (`base.group_user`) đảm bảo chỉ lọc đúng bản ghi của chính mình: `[('employee_id.user_id', '=', user.id)]`.
-- [ ] **4.2 Chuẩn hóa Menu & Access Rights**
+  - [X] Đổi toàn bộ cú pháp Many2many sang chuẩn Odoo 19: `eval="[Command.link(ref(...))]"` và `group_ids`.
+  - [X] Rà soát Record Rules của nhân viên (`base.group_user`): `[('employee_id.user_id', '=', user.id)]`.
+  - [X] Bổ sung Multi-Company Record Rules cho cả 5 models.
+  - [X] Bổ sung Record Rules cho Quản trị viên (`group_equipment_user`).
+- [X] **4.2 Chuẩn hóa Menu & Access Rights**
 
-  - [ ] Đảm bảo phân cấp Menu rõ ràng giữa Nhân viên (`group_equipment_user`) và Quản lý (`group_equipment_manager`).
+  - [X] Phân cấp Menu rõ ràng: Chỉ mở Menu Thiết bị cho Nhân viên thường; ẩn Cấp phát, Thu hồi, Bảo trì, Thanh lý.
+  - [X] Cập nhật `security/ir.model.access.csv`: Phân quyền Read-Only cho nhân viên thường, CRUD cho Quản lý.
+- [X] **4.3 Xây dựng Bộ Test Tự Động Giai Đoạn 4**
+
+  - [X] `tests/test_phase4_security.py`: 5 bài kiểm thử phân quyền cá nhân, quyền CRUD, phân quyền thanh lý và cách ly đa công ty.
+
+---
+
+### Giai đoạn 5: Tổng Kết Toàn Diện & Đóng Gói (Production Ready)
+
+- [X] **5.1 Tích hợp toàn bộ test suites vào `equipment_all`**
+- [X] **5.2 Khớp nối các tài liệu tóm tắt `PHASE_1_SUMMARY.md` đến `PHASE_4_SUMMARY.md`**
 
 ---
 

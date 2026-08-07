@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data noupdate="1">
+    <data>
         <!-- Category -->
         <record id="module_category_equipment_management" model="ir.module.category">
             <field name="name">Thiết bị</field>
@@ -19,57 +19,113 @@
         <record id="group_equipment_user" model="res.groups">
             <field name="name">Nhân viên quản lý thiết bị</field>
             <field name="privilege_id" ref="privilege_equipment_management"/>
-            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="implied_ids" eval="[Command.link(ref('base.group_user'))]"/>
         </record>
 
         <record id="group_equipment_manager" model="res.groups">
             <field name="name">Quản lý thiết bị</field>
             <field name="privilege_id" ref="privilege_equipment_management"/>
-            <field name="implied_ids" eval="[(4, ref('equipment_management.group_equipment_user'))]"/>
+            <field name="implied_ids" eval="[Command.link(ref('equipment_management.group_equipment_user'))]"/>
         </record>
 
-        <!-- Record Rules cho Nhân viên thường (base.group_user) -->
+        <!-- ========================================================= -->
+        <!-- Multi-Company Rules (Global - Cách ly theo từng công ty) -->
+        <!-- ========================================================= -->
+        <record id="rule_company_equipment_multicompany" model="ir.rule">
+            <field name="name">Thiết bị: Multi-Company Rule</field>
+            <field name="model_id" ref="model_company_equipment"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <record id="rule_company_equipment_allocation_multicompany" model="ir.rule">
+            <field name="name">Cấp phát: Multi-Company Rule</field>
+            <field name="model_id" ref="model_company_equipment_allocation"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <record id="rule_company_equipment_return_multicompany" model="ir.rule">
+            <field name="name">Thu hồi: Multi-Company Rule</field>
+            <field name="model_id" ref="model_company_equipment_return"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <record id="rule_company_equipment_maintenance_multicompany" model="ir.rule">
+            <field name="name">Bảo trì: Multi-Company Rule</field>
+            <field name="model_id" ref="model_company_equipment_maintenance"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <record id="rule_company_equipment_liquidation_multicompany" model="ir.rule">
+            <field name="name">Thanh lý: Multi-Company Rule</field>
+            <field name="model_id" ref="model_company_equipment_liquidation"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <!-- ========================================================= -->
+        <!-- Record Rules cho Nhân viên thông thường (base.group_user) -->
+        <!-- ========================================================= -->
         <record id="rule_equipment_employee" model="ir.rule">
-            <field name="name">Thiết bị cá nhân</field>
+            <field name="name">Thiết bị cá nhân (Nhân viên)</field>
             <field name="model_id" ref="model_company_equipment"/>
             <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
-            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="groups" eval="[Command.link(ref('base.group_user'))]"/>
         </record>
 
         <record id="rule_allocation_employee" model="ir.rule">
-            <field name="name">Cấp phát cá nhân</field>
+            <field name="name">Cấp phát cá nhân (Nhân viên)</field>
             <field name="model_id" ref="model_company_equipment_allocation"/>
             <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
-            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="groups" eval="[Command.link(ref('base.group_user'))]"/>
         </record>
 
         <record id="rule_return_employee" model="ir.rule">
-            <field name="name">Thu hồi cá nhân</field>
+            <field name="name">Thu hồi cá nhân (Nhân viên)</field>
             <field name="model_id" ref="model_company_equipment_return"/>
             <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
-            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="groups" eval="[Command.link(ref('base.group_user'))]"/>
         </record>
 
-        <!-- Record Rules cho Nhân viên quản lý (thấy tất cả) -->
+        <!-- ========================================================= -->
+        <!-- Record Rules cho Quản lý thiết bị (group_equipment_user) -->
+        <!-- ========================================================= -->
         <record id="rule_equipment_manager_all" model="ir.rule">
             <field name="name">Quản lý xem toàn bộ thiết bị</field>
             <field name="model_id" ref="model_company_equipment"/>
             <field name="domain_force">[(1, '=', 1)]</field>
-            <field name="groups" eval="[(4, ref('equipment_management.group_equipment_user'))]"/>
+            <field name="groups" eval="[Command.link(ref('equipment_management.group_equipment_user'))]"/>
         </record>
 
         <record id="rule_allocation_manager_all" model="ir.rule">
             <field name="name">Quản lý xem toàn bộ cấp phát</field>
             <field name="model_id" ref="model_company_equipment_allocation"/>
             <field name="domain_force">[(1, '=', 1)]</field>
-            <field name="groups" eval="[(4, ref('equipment_management.group_equipment_user'))]"/>
+            <field name="groups" eval="[Command.link(ref('equipment_management.group_equipment_user'))]"/>
         </record>
 
         <record id="rule_return_manager_all" model="ir.rule">
             <field name="name">Quản lý xem toàn bộ thu hồi</field>
             <field name="model_id" ref="model_company_equipment_return"/>
             <field name="domain_force">[(1, '=', 1)]</field>
-            <field name="groups" eval="[(4, ref('equipment_management.group_equipment_user'))]"/>
+            <field name="groups" eval="[Command.link(ref('equipment_management.group_equipment_user'))]"/>
+        </record>
+
+        <record id="rule_maintenance_manager_all" model="ir.rule">
+            <field name="name">Quản lý xem toàn bộ bảo trì</field>
+            <field name="model_id" ref="model_company_equipment_maintenance"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[Command.link(ref('equipment_management.group_equipment_user'))]"/>
+        </record>
+
+        <record id="rule_liquidation_manager_all" model="ir.rule">
+            <field name="name">Quản lý xem toàn bộ thanh lý</field>
+            <field name="model_id" ref="model_company_equipment_liquidation"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[Command.link(ref('equipment_management.group_equipment_user'))]"/>
         </record>
     </data>
 </odoo>
