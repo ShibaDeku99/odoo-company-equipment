@@ -8,9 +8,10 @@ class CompanyEquipment(models.Model):
     _description = "Thiết bị công ty"
     _rec_name = "name"
 
-    _sql_constraints = [
-        ('unique_code', 'unique(code)', 'Mã thiết bị phải là duy nhất trong hệ thống!'),
-    ]
+    _unique_code = models.Constraint(
+        'UNIQUE(code)',
+        'Mã thiết bị phải là duy nhất trong hệ thống!',
+    )
 
     # --- Thông tin cơ bản ---
     name = fields.Char(

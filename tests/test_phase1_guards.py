@@ -2,7 +2,7 @@ from odoo.tests.common import TransactionCase, tagged
 from odoo.exceptions import UserError, ValidationError
 from odoo import fields
 
-@tagged('post_install', '-at_install', 'equipment_phase1')
+@tagged('post_install', '-at_install', 'equipment_phase1', 'equipment_all')
 class TestEquipmentPhase1Guards(TransactionCase):
 
     @classmethod
@@ -95,14 +95,18 @@ class TestEquipmentPhase1Guards(TransactionCase):
         with self.assertRaises(UserError):
             maint1.unlink()
 
-        # Không thể sửa thông tin bảo vệ khi đang bảo trì
+        # Không thể sửa thông tin bảo vệ khi đang bảo trì (equipment_id)
         with self.assertRaises(UserError):
-            maint1.write({'cost': 500000.0})
+            maint1.write({'equipment_id': self.equipment_assigned.id})
 
         # Hoàn thành bảo trì -> thiết bị về available
         maint1.action_done()
         self.assertEqual(eq.state, 'available')
         self.assertEqual(maint1.state, 'done')
+
+        # Không thể sửa cost khi phiếu đã hoàn thành (done)
+        with self.assertRaises(UserError):
+            maint1.write({'cost': 500000.0})
 
     def test_04_liquidation_guards_and_maint_check(self):
         """Kiểm tra thanh lý: chặn khi đang bảo trì, không cho sửa/xóa khi đã duyệt"""

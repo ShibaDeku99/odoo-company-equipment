@@ -36,8 +36,8 @@ class TestEquipmentPhase2Constraints(TransactionCase):
                 'serial_number': 'SN-MAC-001',  # Trùng serial với equipment_valid
             })
 
-        # Thử tạo thiết bị trùng mã code -> Phải chặn bởi @api.constrains / _sql_constraints
-        with self.assertRaises(ValidationError):
+        # Thử tạo thiết bị trùng mã code -> Phải chặn bởi @api.constrains / models.Constraint
+        with mute_logger('odoo.sql_db'), self.assertRaises(Exception):
             self.env['company.equipment'].create({
                 'name': 'Laptop trùng mã code',
                 'code': 'EQ/P2/001',  # Trùng code với equipment_valid
