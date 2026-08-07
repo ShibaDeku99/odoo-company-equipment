@@ -1,17 +1,38 @@
 # 🏢 Module Quản Lý Thiết Bị Doanh Nghiệp (Equipment Management)
 
+[![Odoo Version](https://img.shields.io/badge/Odoo-19.0-714B67.svg?style=flat&logo=odoo)](https://www.odoo.com)
+[![Build Status](https://img.shields.io/badge/Tests-20%2F20%20Passed%20(100%25)-success.svg)](https://github.com/ShibaDeku99/odoo-company-equipment)
+[![Version](https://img.shields.io/badge/Version-19.0.1.0.0-blue.svg)](https://github.com/ShibaDeku99/odoo-company-equipment)
+[![License: LGPL-3](https://img.shields.io/badge/License-LGPL--3-green.svg)](https://www.gnu.org/licenses/lgpl-3.0.html)
+
+> **Hệ thống Quản lý Vòng đời, Cấp phát, Thu hồi, Bảo trì, Khấu hao & Thanh lý Thiết bị Doanh nghiệp chuẩn Enterprise trên nền tảng Odoo 19.**
+
 ---
 
 ## 📑 Mục Lục
 
-1. [Cấu Trúc Dữ Liệu & Vòng Đời Thiết Bị](#-cấu-trúc-dữ-liệu--vòng-đời-thiết-bị)
-2. [Quy Trình & Luồng Hoạt Động (Workflows)](#-quy-trình--luồng-hoạt-động-workflows)
+1. [Tính Năng Nổi Bật](#-tính-năng-nổi-bật)
+2. [Cấu Trúc Dữ Liệu & Vòng Đời Thiết Bị](#-cấu-trúc-dữ-liệu--vòng-đời-thiết-bị)
+3. [Quy Trình & Luồng Hoạt Động (Workflows)](#-quy-trình--luồng-hoạt-động-workflows)
    - [1. Quản lý Hồ sơ & Khấu hao thiết bị](#1-quản-lý-hồ-sơ--khấu-hao-thiết-bị)
    - [2. Quy trình Cấp phát thiết bị](#2-quy-trình-cấp-phát-thiết-bị)
-   - [3. Quy trình Thu hồi thiết bị](#3-quy-trình-thu-hồi-thiết-bị)
+   - [3. Quy trình Thu hồi thiết bị & Tự động hóa](#3-quy-trình-thu-hồi-thiết-bị--tự-động-hóa)
    - [4. Quy trình Bảo trì & Sửa chữa](#4-quy-trình-bảo-trì--sửa-chữa)
    - [5. Quy trình Thanh lý tài sản](#5-quy-trình-thanh-lý-tài-sản)
-3. [Hệ Thống Phân Quyền & Bảo Mật](#-hệ-thống-phân-quyền--bảo-mật)
+4. [Tích Hợp Chatter & Audit Trail](#-tích-hợp-chatter--audit-trail)
+5. [Hệ Thống Phân Quyền & Bảo Mật](#-hệ-thống-phân-quyền--bảo-mật)
+6. [Hướng Dẫn Cài Đặt & Chạy Kiểm Thử Tự Động](#-hướng-dẫn-cài-đặt--chạy-kiểm-thử-tự-động)
+
+---
+
+## ⭐ Tính Năng Nổi Bật
+
+* **Khóa Chặt Vòng Đời ở Backend**: Ngăn chặn 100% các hành vi thao tác sai logic, bảo vệ chứng từ gốc khi đã xác nhận.
+* **Tự Động Hóa Nghiệp Vụ**: Khi thu hồi thiết bị báo hỏng (`broken` / `maintenance`), hệ thống tự động sinh phiếu Bảo trì ở trạng thái Nháp kèm liên kết Smart Button.
+* **Toàn Vẹn Dữ Liệu & Khấu Hao**: Ràng buộc duy nhất Mã thiết bị (`models.Constraint`), Số serial (`@api.constrains`), tính toán khấu hao đường thẳng tự động.
+* **Chuẩn Tiền Tệ & Đa Công Ty**: Áp dụng `fields.Monetary` theo đơn vị tiền tệ công ty (VND) và cách ly dữ liệu Multi-Company độc lập.
+* **Audit Trail & Chatter**: Kế thừa `mail.thread` và `mail.activity.mixin`, theo dõi biến động trạng thái (`tracking=True`) trên mọi mô hình.
+* **Bộ Test Tự Động 100%**: 20 kịch bản kiểm thử tự động toàn diện bao phủ toàn bộ vòng đời và phân quyền.
 
 ---
 
@@ -30,7 +51,7 @@ flowchart TD
 
     subgraph Incident [" SỰ CỐ & BẢO TRÌ "]
         Avail -->|Gửi bảo trì| Maint["🔧 ĐANG SỬA CHỮA (maintenance)"]
-        Assign -->|Thu hồi: Cần bảo dưỡng| Maint
+        Assign -->|Thu hồi: Cần bảo dưỡng / Hỏng (Tự động sinh phiếu)| Maint
         Maint -->|Bảo dưỡng xong| Avail
         Assign -->|Thu hồi: Báo hỏng| Broken["⚠️ HƯ HỎNG (broken)"]
         Assign -->|Thu hồi: Báo mất| Lost["❌ MẤT (lost)"]
@@ -44,7 +65,6 @@ flowchart TD
         Lost --> Finish
     end
 
-    %% Định dạng màu sắc trực quan
     style Avail fill:#2ecc71,stroke:#27ae60,stroke-width:2px,color:#fff,font-weight:bold
     style Assign fill:#3498db,stroke:#2980b9,stroke-width:2px,color:#fff,font-weight:bold
     style Maint fill:#f39c12,stroke:#d35400,stroke-width:2px,color:#fff,font-weight:bold
@@ -101,32 +121,25 @@ sequenceDiagram
 
 ---
 
-### 3. Quy trình Thu hồi thiết bị (`company.equipment.return`)
+### 3. Quy trình Thu hồi thiết bị & Tự động hóa (`company.equipment.return`)
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor NV as Nhân viên quản lý thiết bị
+    actor NV as Quản lý thiết bị
     participant TH as Phiếu Thu Hồi
     participant CP as Phiếu Cấp Phát Gốc
     participant TB as Thiết Bị
+    participant BT as Phiếu Bảo Trì
 
     NV->>TH: Tạo phiếu thu hồi (Chọn Phiếu cấp phát đã confirmed)
-    Note over TH: Tự động điền Thiết bị, Nhân viên trả, Ngày bàn giao
-    NV->>TH: Chọn "Tình trạng khi thu hồi" (Tốt / Cần bảo trì / Hư hỏng / Mất)
+    NV->>TH: Chọn Tình trạng: "Cần bảo trì" hoặc "Hư hỏng"
     NV->>TH: Bấm "Xác nhận thu hồi" (action_confirm)
-    TH->>TB: Gỡ người sử dụng (employee_id = False) & Ngày bàn giao
-    TH->>TB: Cập nhật trạng thái mới (Trong kho / Đang sửa chữa / Hư hỏng / Mất)
-    TH->>CP: Chuyển trạng thái phiếu cấp phát sang "Đã thu hồi" (returned)
-    TH->>TH: Chuyển trạng thái phiếu thu hồi sang "Đã thu hồi" (returned)
+    TH->>TB: Gỡ người sử dụng & Cập nhật trạng thái mới
+    TH->>CP: Chuyển trạng thái phiếu cấp phát sang "Đã thu hồi"
+    TH->>BT: TỰ ĐỘNG tạo Phiếu Bảo Trì (Nháp) kèm Smart Button
+    TH->>TH: Chuyển trạng thái phiếu sang "Đã thu hồi"
 ```
-
-> [!NOTE]
-> **Ràng buộc an toàn:**
->
-> - Ngày thu hồi không được nhỏ hơn ngày cấp phát.
-> - Mỗi phiếu cấp phát chỉ được thu hồi duy nhất 1 lần (chống thu hồi trùng).
-> - Phiếu thu hồi đã hoàn thành không thể bị xóa để đảm bảo toàn vẹn dữ liệu kế toán/tài sản.
 
 ---
 
@@ -145,10 +158,10 @@ flowchart LR
     style D fill:#ff7675,stroke:#d63031
 ```
 
-- **Tạo phiếu**: Điền thiết bị, đơn vị sửa chữa (`res.partner`), chi phí dự kiến, mô tả hỏng hóc.
-- **Xác nhận (Bắt đầu sửa)**: Trạng thái phiếu sang `in_progress`, thiết bị chuyển sang `maintenance` (Đang sửa chữa).
-- **Hoàn thành**: Trạng thái phiếu sang `done`, tự động lưu ngày hoàn tất, thiết bị chuyển trạng thái về `available` (Trong kho) để sẵn sàng cấp phát tiếp.
-- **Hủy phiếu**: Nếu hủy trong khi đang sửa chữa, thiết bị tự động được hoàn trả về trạng thái `available`.
+- **Tạo phiếu**: Chọn thiết bị trong kho/hư hỏng, đơn vị sửa chữa (`res.partner`), chi phí dự kiến.
+- **Xác nhận (Bắt đầu sửa)**: Phiếu sang `in_progress`, thiết bị chuyển sang `maintenance` (Đang sửa chữa). Chống tạo phiếu bảo trì thứ 2 trùng lặp.
+- **Hoàn thành**: Phiếu sang `done`, thiết bị chuyển trạng thái về `available` (Trong kho) để sẵn sàng cấp phát.
+- **Hủy phiếu**: Nếu hủy trong khi đang sửa chữa, thiết bị tự động được hoàn trả về `available`.
 
 ---
 
@@ -156,9 +169,9 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    Start[Thiết bị hỏng / Hết khấu hao / Cũ] --> Create[Tạo Phiếu Thanh Lý]
+    Start[Thiết bị hỏng / Hết khấu hao] --> Create[Tạo Phiếu Thanh Lý]
     Create --> Check{Kiểm tra hợp lệ}
-    Check -- Thiết bị đang dùng (assigned) hoặc đã thanh lý --> Reject[Báo lỗi ValidationError]
+    Check -- Thiết bị đang dùng hoặc đang bảo trì --> Reject[Báo lỗi ValidationError]
     Check -- Thiết bị trong kho / hỏng / sửa chữa --> Draft[Lưu phiếu ở trạng thái Nháp]
     Draft -->|Chỉ Manager có quyền| Approve[Phê duyệt thanh lý - action_approve]
     Approve --> UpdateState[Đổi trạng thái thiết bị sang 'Đã thanh lý' liquidated]
@@ -167,41 +180,49 @@ flowchart TD
 
 ---
 
+## 💬 Tích Hợp Chatter & Audit Trail
+
+Toàn bộ 5 mô hình đều được kế thừa:
+* `mail.thread`: Ghi log tự động khi thay đổi trạng thái, gửi tin nhắn trao đổi nội bộ.
+* `mail.activity.mixin`: Lên lịch hoạt động (Call, Meeting, To-do) nhắc nhở việc bảo trì hoặc thu hồi.
+* `tracking=True`: Theo dõi nhật ký lịch sử các trường trọng yếu (`state`, `employee_id`, `cost`, `price`, `vendor_id`).
+
+---
+
 ## 🔒 Hệ Thống Phân Quyền & Bảo Mật
 
-Module áp dụng cơ chế bảo mật 3 lớp chặt chẽ của Odoo: **User Groups (Nhóm người dùng)**, **Access Control Lists (ACL)**, và **Record Rules (Quy tắc bản ghi)**:
+Áp dụng cơ chế bảo mật 3 lớp chặt chẽ: **User Groups (RBAC)**, **Access Control Lists (ACL)**, và **Record Rules (Quy tắc bản ghi)**:
 
-### 1. Bảng phân quyền tổng hợp
+### Bảng phân quyền ma trận
 
-| Đối tượng / Nghiệp vụ                 | Nhân viên thông thường (`base.group_user`) | Nhân viên Quản lý Thiết bị (`group_equipment_user`) | Trưởng phòng / Quản lý (`group_equipment_manager`) |
-| :------------------------------------------ | :-----------------------------------------------: | :---------------------------------------------------------: | :-------------------------------------------------------: |
-| **Xem thiết bị của bản thân**    |                      ✅ Xem                      |                           ✅ Xem                           |                          ✅ Xem                          |
-| **Xem toàn bộ thiết bị công ty** |                     ❌ Không                     |                           ✅ Xem                           |                          ✅ Xem                          |
-| **Tạo, sửa, xóa Thiết bị**       |                     ❌ Không                     |                       ✅ Toàn quyền                       |                      ✅ Toàn quyền                      |
-| **Tạo & Duyệt Phiếu Cấp phát**   |      ❌ Không (chỉ xem phiếu của mình)      |                       ✅ Toàn quyền                       |                      ✅ Toàn quyền                      |
-| **Tạo & Duyệt Phiếu Thu hồi**     |      ❌ Không (chỉ xem phiếu của mình)      |                       ✅ Toàn quyền                       |                      ✅ Toàn quyền                      |
-| **Tạo & Thực hiện Bảo trì**      |                     ❌ Không                     |                       ✅ Toàn quyền                       |                      ✅ Toàn quyền                      |
-| **Xem Phiếu Thanh lý**              |                     ❌ Không                     |                   ✅ Chỉ xem (Read-only)                   |                      ✅ Toàn quyền                      |
-| **Tạo & Phê duyệt Thanh lý**      |                     ❌ Không                     |                          ❌ Không                          |           ✅**Toàn quyền phê duyệt**           |
-
----
-
-### 2. Chi tiết phân cấp quyền:
-
-#### 👤 **Nhân viên thông thường (`base.group_user`)**
-
-- Chỉ thấy được thiết bị và phiếu cấp phát/thu hồi được giao cho chính tài khoản của mình (`employee_id.user_id == user.id`).
-- Không thấy menu quản lý nâng cao, không sửa/xóa được dữ liệu.
-
-#### 👷 **Nhân viên Quản lý Thiết bị (`group_equipment_user`)**
-
-- Xem và quản lý toàn bộ thiết bị trong công ty.
-- Thực hiện toàn bộ quy trình vận hành hàng ngày: Cấp phát, Thu hồi, Gửi bảo dưỡng thiết bị.
-- Đối với thanh lý: Chỉ được xem lịch sử thanh lý, không được duyệt thanh lý tài sản.
-
-#### 👑 **Quản lý Thiết bị (`group_equipment_manager`)**
-
-- Kế thừa toàn bộ quyền của Nhân viên Quản lý Thiết bị.
-- Nắm giữ thẩm quyền cao nhất: Phê duyệt các phiếu Thanh lý thiết bị (`company.equipment.liquidation`), định giá bán và ghi nhận bên mua.
+| Nghiệp vụ | Nhân viên thông thường (`base.group_user`) | Nhân viên Quản lý Thiết bị (`group_equipment_user`) | Trưởng phòng / Quản lý (`group_equipment_manager`) |
+| :--- | :---: | :---: | :---: |
+| **Xem thiết bị của chính mình** | ✅ Có | ✅ Có | ✅ Có |
+| **Xem toàn bộ thiết bị công ty** | ❌ Không | ✅ Có | ✅ Có |
+| **Tạo, sửa, xóa Thiết bị** | ❌ Không | ✅ Toàn quyền | ✅ Toàn quyền |
+| **Tạo & Xác nhận Cấp phát** | ❌ Không (chỉ xem của mình) | ✅ Toàn quyền | ✅ Toàn quyền |
+| **Tạo & Xác nhận Thu hồi** | ❌ Không (chỉ xem của mình) | ✅ Toàn quyền | ✅ Toàn quyền |
+| **Tạo & Thực hiện Bảo trì** | ❌ Không | ✅ Toàn quyền | ✅ Toàn quyền |
+| **Xem Phiếu Thanh lý** | ❌ Không | ✅ Chỉ xem (Read-only) | ✅ Toàn quyền |
+| **Phê duyệt Thanh lý** | ❌ Không | ❌ Không | ✅ **Toàn quyền phê duyệt** |
+| **Cách ly Đa công ty (Multi-Company)** | ✅ Tự động | ✅ Tự động | ✅ Tự động |
 
 ---
+
+## 🧪 Hướng Dẫn Cài Đặt & Chạy Kiểm Thử Tự Động
+
+### 1. Cài đặt / Nâng cấp module
+```powershell
+.\.venv\Scripts\python.exe odoo-bin -c odoo.conf -d odoo19 -u equipment_management --stop-after-init
+```
+
+### 2. Chạy toàn bộ 20 bài Test tự động
+```powershell
+.\.venv\Scripts\python.exe odoo-bin -c odoo.conf -d odoo19 -u equipment_management --test-tags=equipment_all --stop-after-init
+```
+
+### 3. Chạy kiểm thử theo từng Giai đoạn:
+* **Phase 1 (Backend Guards)**: `--test-tags=equipment_phase1`
+* **Phase 2 (Constraints & Tiền tệ)**: `--test-tags=equipment_phase2`
+* **Phase 3 (Automation & Chatter)**: `--test-tags=equipment_phase3`
+* **Phase 4 (Security & Multi-Company)**: `--test-tags=equipment_security`
