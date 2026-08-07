@@ -42,26 +42,26 @@ Thiết bị (`company.equipment`) trải qua các trạng thái xuyên suốt v
 
 ```mermaid
 flowchart TD
-    Start([⚡ Tạo mới]) --> Avail["📦 TRONG KHO (available)"]
+    Start(["⚡ Tạo mới"]) --> Avail["📦 TRONG KHO (available)"]
 
     subgraph Operation [" VẬN HÀNH & SỬ DỤNG "]
-        Avail -->|1. Cấp phát| Assign["👤 ĐANG SỬ DỤNG (assigned)"]
-        Assign -->|Thu hồi: Tốt| Avail
+        Avail -->|"1. Cấp phát"| Assign["👤 ĐANG SỬ DỤNG (assigned)"]
+        Assign -->|"Thu hồi: Tốt"| Avail
     end
 
     subgraph Incident [" SỰ CỐ & BẢO TRÌ "]
-        Avail -->|Gửi bảo trì| Maint["🔧 ĐANG SỬA CHỮA (maintenance)"]
-        Assign -->|Thu hồi: Cần bảo dưỡng / Hỏng (Tự động sinh phiếu)| Maint
-        Maint -->|Bảo dưỡng xong| Avail
-        Assign -->|Thu hồi: Báo hỏng| Broken["⚠️ HƯ HỎNG (broken)"]
-        Assign -->|Thu hồi: Báo mất| Lost["❌ MẤT (lost)"]
+        Avail -->|"Gửi bảo trì"| Maint["🔧 ĐANG SỬA CHỮA (maintenance)"]
+        Assign -->|"Thu hồi: Cần bảo dưỡng / Hư hỏng (Tự động tạo phiếu)"| Maint
+        Maint -->|"Bảo dưỡng xong"| Avail
+        Assign -->|"Thu hồi: Báo hỏng"| Broken["⚠️ HƯ HỎNG (broken)"]
+        Assign -->|"Thu hồi: Báo mất"| Lost["❌ MẤT (lost)"]
     end
 
     subgraph EndLife [" KẾT THÚC VÒNG ĐỜI "]
-        Avail -->|Thanh lý kho| Liq["💰 ĐÃ THANH LÝ (liquidated)"]
-        Maint -->|Không thể sửa| Liq
-        Broken -->|Thanh lý xác| Liq
-        Liq --> Finish([🏁 Kết thúc])
+        Avail -->|"Thanh lý kho"| Liq["💰 ĐÃ THANH LÝ (liquidated)"]
+        Maint -->|"Không thể sửa"| Liq
+        Broken -->|"Thanh lý xác"| Liq
+        Liq --> Finish(["🏁 Kết thúc"])
         Lost --> Finish
     end
 
@@ -169,13 +169,13 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    Start[Thiết bị hỏng / Hết khấu hao] --> Create[Tạo Phiếu Thanh Lý]
-    Create --> Check{Kiểm tra hợp lệ}
-    Check -- Thiết bị đang dùng hoặc đang bảo trì --> Reject[Báo lỗi ValidationError]
-    Check -- Thiết bị trong kho / hỏng / sửa chữa --> Draft[Lưu phiếu ở trạng thái Nháp]
-    Draft -->|Chỉ Manager có quyền| Approve[Phê duyệt thanh lý - action_approve]
-    Approve --> UpdateState[Đổi trạng thái thiết bị sang 'Đã thanh lý' liquidated]
-    Approve --> DoneState[Đổi phiếu sang 'Đã duyệt' approved]
+    Start["Thiết bị hỏng / Hết khấu hao"] --> Create["Tạo Phiếu Thanh Lý"]
+    Create --> Check{"Kiểm tra hợp lệ"}
+    Check -->|"Đang dùng hoặc đang bảo trì"| Reject["Báo lỗi ValidationError"]
+    Check -->|"Trong kho / hỏng / sửa chữa"| Draft["Lưu phiếu ở trạng thái Nháp"]
+    Draft -->|"Chỉ Manager có quyền"| Approve["Phê duyệt thanh lý (action_approve)"]
+    Approve --> UpdateState["Đổi trạng thái thiết bị sang Đã thanh lý"]
+    Approve --> DoneState["Đổi phiếu sang Đã duyệt"]
 ```
 
 ---
