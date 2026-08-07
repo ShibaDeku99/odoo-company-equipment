@@ -13,6 +13,13 @@ class CompanyEquipmentReturn(models.Model):
         readonly=True, 
         default=lambda self: _('New')
     )
+
+    company_id = fields.Many2one(
+        'res.company',
+        string="Công ty",
+        default=lambda self: self.env.company,
+        required=True,
+    )
     
     allocation_id = fields.Many2one(
         'company.equipment.allocation', 

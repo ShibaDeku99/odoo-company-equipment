@@ -7,6 +7,7 @@
         <field name="model">company.equipment.maintenance</field>
         <field name="arch" type="xml">
             <list string="Phiếu bảo trì">
+                <field name="currency_id" column_invisible="1"/>
                 <field name="name"/>
                 <field name="equipment_id"/>
                 <field name="vendor_id" optional="show"/>
@@ -40,6 +41,7 @@
                         <group>
                             <field name="equipment_id" readonly="state != 'draft'"/>
                             <field name="vendor_id" readonly="state == 'done'"/>
+                            <field name="currency_id" readonly="state == 'done'"/>
                             <field name="cost" readonly="state == 'done'"/>
                         </group>
                         <group>

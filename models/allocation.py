@@ -14,6 +14,13 @@ class CompanyEquipmentAllocation(models.Model):
         default=lambda self: _('New'),
     )
 
+    company_id = fields.Many2one(
+        'res.company',
+        string="Công ty",
+        default=lambda self: self.env.company,
+        required=True,
+    )
+
     employee_id = fields.Many2one(
         'hr.employee',
         string="Nhân viên nhận",

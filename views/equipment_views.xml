@@ -7,11 +7,13 @@
         <field name="model">company.equipment</field>
         <field name="arch" type="xml">
             <list string="Thiết bị">
+                <field name="currency_id" column_invisible="1"/>
                 <field name="code"/>
                 <field name="name"/>
                 <field name="category"/>
                 <field name="serial_number"/>
                 <field name="purchase_date"/>
+                <field name="purchase_price" optional="show"/>
                 <field name="employee_id" optional="show"/>
                 <field name="state" widget="badge" decoration-success="state == 'available'" decoration-info="state == 'assigned'" decoration-warning="state == 'maintenance'" decoration-danger="state in ['broken', 'lost']"/>
             </list>
@@ -44,6 +46,7 @@
                             <field name="employee_id"/>
                             <field name="allocation_date"/>
                             <field name="purchase_date" groups="equipment_management.group_equipment_user"/>
+                            <field name="currency_id" groups="equipment_management.group_equipment_user"/>
                             <field name="purchase_price" groups="equipment_management.group_equipment_user"/>
                         </group>
                     </group>
@@ -66,6 +69,7 @@
                         <page string="Lịch sử bảo trì" name="maintenance" groups="equipment_management.group_equipment_user">
                             <field name="maintenance_ids" readonly="1">
                                 <list>
+                                    <field name="currency_id" column_invisible="1"/>
                                     <field name="name"/>
                                     <field name="request_date"/>
                                     <field name="vendor_id"/>
@@ -77,6 +81,7 @@
                         <page string="Thông tin thanh lý" name="liquidation" groups="equipment_management.group_equipment_user">
                             <field name="liquidation_ids" readonly="1">
                                 <list>
+                                    <field name="currency_id" column_invisible="1"/>
                                     <field name="name"/>
                                     <field name="date"/>
                                     <field name="reason"/>

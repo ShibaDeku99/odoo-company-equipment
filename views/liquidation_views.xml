@@ -7,6 +7,7 @@
         <field name="model">company.equipment.liquidation</field>
         <field name="arch" type="xml">
             <list string="Phiếu thanh lý">
+                <field name="currency_id" column_invisible="1"/>
                 <field name="name"/>
                 <field name="equipment_id"/>
                 <field name="date"/>
@@ -42,6 +43,7 @@
                             <field name="date" readonly="state != 'draft'"/>
                         </group>
                         <group>
+                            <field name="currency_id" readonly="state != 'draft'"/>
                             <field name="price" readonly="state != 'draft'"/>
                             <field name="purchaser_name" readonly="state != 'draft'"/>
                         </group>
