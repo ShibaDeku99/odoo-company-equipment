@@ -57,7 +57,7 @@ class CompanyEquipmentReturn(models.Model):
             ('lost', 'Mất'),
         ], 
         string="Tình trạng khi thu hồi", 
-        required=True,
+        required=True, 
         default='good'
     )
     
@@ -97,7 +97,7 @@ class CompanyEquipmentReturn(models.Model):
                 ('id', '!=', record.id)
             ])
             if existing_return:
-                raise ValidationError(_("Thiết bị này đã được thu hồi trong một phiếu khác."))
+                raise ValidationError(_("Thiết bị này đã được thu hồi trong một phiếu khác (%s).") % existing_return[0].name)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -120,7 +120,7 @@ class CompanyEquipmentReturn(models.Model):
                 continue
             
             if record.equipment_id.state != 'assigned':
-                raise UserError(_("Thiết bị không ở trạng thái 'Đang sử dụng'."))
+                raise UserError(_("Thiết bị '%s' hiện không ở trạng thái 'Đang sử dụng'.") % record.equipment_id.display_name)
             
             # Xác định trạng thái mới của thiết bị
             new_equipment_state = 'available'
@@ -153,10 +153,21 @@ class CompanyEquipmentReturn(models.Model):
                 raise UserError(_("Chỉ có thể hủy phiếu thu hồi đang ở trạng thái Nháp."))
             record.write({'state': 'cancelled'})
 
+    def write(self, vals):
+        """Khóa không cho chỉnh sửa thông tin khi phiếu đã thu hồi hoặc đã hủy."""
+        protected_fields = {'allocation_id', 'date', 'condition'}
+        for record in self:
+            if record.state in ['returned', 'cancelled']:
+                modified_protected = set(vals.keys()) & protected_fields
+                if modified_protected:
+                    raise UserError(_(
+                        "Không thể chỉnh sửa thông tin (%s) của phiếu thu hồi đã hoàn tất hoặc đã hủy."
+                    ) % ", ".join(modified_protected))
+        return super().write(vals)
+
     def unlink(self):
         """Ngăn chặn người dùng xóa phiếu thu hồi đã xác nhận hoàn tất."""
         for record in self:
             if record.state not in ['draft', 'cancelled']:
-                raise UserError(_("Bạn không thể xóa phiếu thu hồi đã xác nhận. Vui lòng hủy phiếu nếu cần."))
+                raise UserError(_("Bạn không thể xóa phiếu thu hồi đã xác nhận (%s). Vui lòng hủy phiếu nếu cần.") % record.name)
         return super().unlink()
-

@@ -1,6 +1,7 @@
 {
     "name": "Equipment Management",
     "version": "1.0",
+    "author": "ShibaDeku",
     "category": "Human Resources/Equipment",
     "summary": "Quản lý thiết bị công ty",
     "description": """

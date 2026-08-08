@@ -18,7 +18,7 @@ class CompanyEquipmentLiquidation(models.Model):
         'company.equipment', 
         string="Thiết bị", 
         required=True,
-        domain=[('state', 'in', ['available', 'maintenance', 'broken'])]
+        domain=[('state', 'in', ['available', 'broken'])]
     )
     
     date = fields.Date(
@@ -32,9 +32,9 @@ class CompanyEquipmentLiquidation(models.Model):
             ('broken', 'Hư hỏng nặng'),
             ('old', 'Cũ / Hết khấu hao'),
             ('other', 'Lý do khác'),
-        ],
-        string="Lý do thanh lý",
-        required=True,
+        ], 
+        string="Lý do thanh lý", 
+        required=True, 
         default='old'
     )
     
@@ -61,23 +61,39 @@ class CompanyEquipmentLiquidation(models.Model):
         required=True
     )
 
-    @api.constrains('equipment_id')
+    @api.constrains('equipment_id', 'state')
     def _check_equipment(self):
         """Kiểm tra tính hợp lệ của thiết bị đem thanh lý."""
         for record in self:
-            if record.equipment_id:
-                # 1. Không thể thanh lý thiết bị đang có người dùng hoặc đã thanh lý rồi
-                if record.equipment_id.state in ['assigned', 'liquidated']:
-                    raise ValidationError(_("Không thể thanh lý thiết bị đang sử dụng hoặc đã thanh lý rồi."))
-                
-                # 2. Tránh tạo nhiều phiếu thanh lý cùng lúc cho 1 thiết bị
-                existing = self.search([
-                    ('equipment_id', '=', record.equipment_id.id),
-                    ('state', 'in', ['draft', 'approved']),
-                    ('id', '!=', record.id)
-                ])
-                if existing:
-                    raise ValidationError(_("Thiết bị này đã có Phiếu thanh lý khác đang xử lý hoặc đã duyệt."))
+            if not record.equipment_id:
+                continue
+
+            # 1. Không thể thanh lý thiết bị đang có người dùng, đã mất hoặc đã thanh lý rồi (kiểm tra ở trạng thái nháp)
+            if record.state == 'draft' and record.equipment_id.state in ['assigned', 'liquidated', 'lost']:
+                raise ValidationError(_(
+                    "Không thể thanh lý thiết bị '%s' vì thiết bị đang ở trạng thái '%s'."
+                ) % (record.equipment_id.display_name, record.equipment_id.state))
+            
+            # 2. Không cho phép thanh lý khi thiết bị đang có phiếu bảo trì đang xử lý
+            active_maintenance = self.env['company.equipment.maintenance'].search([
+                ('equipment_id', '=', record.equipment_id.id),
+                ('state', '=', 'in_progress')
+            ], limit=1)
+            if active_maintenance:
+                raise ValidationError(_(
+                    "Thiết bị '%s' hiện đang có phiếu bảo trì '%s' đang xử lý. Vui lòng hoàn thành hoặc hủy bảo trì trước khi thanh lý."
+                ) % (record.equipment_id.display_name, active_maintenance.name))
+
+            # 3. Tránh tạo nhiều phiếu thanh lý cùng lúc cho 1 thiết bị
+            existing = self.search([
+                ('equipment_id', '=', record.equipment_id.id),
+                ('state', 'in', ['draft', 'approved']),
+                ('id', '!=', record.id)
+            ])
+            if existing:
+                raise ValidationError(_(
+                    "Thiết bị '%s' đã có Phiếu thanh lý khác đang xử lý hoặc đã duyệt."
+                ) % record.equipment_id.display_name)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -89,6 +105,8 @@ class CompanyEquipmentLiquidation(models.Model):
 
     def action_approve(self):
         """Phê duyệt thanh lý thiết bị:
+        - Kiểm tra thiết bị không được ở trạng thái đang sử dụng, đã mất, hoặc đã thanh lý.
+        - Kiểm tra không có phiếu bảo trì đang xử lý.
         - Đổi trạng thái thiết bị sang 'Đã thanh lý' (liquidated).
         - Đổi trạng thái phiếu thanh lý sang 'Đã duyệt' (approved).
         """
@@ -96,11 +114,24 @@ class CompanyEquipmentLiquidation(models.Model):
             if record.state != 'draft':
                 continue
             
-            if record.equipment_id.state in ['assigned', 'liquidated']:
-                raise UserError(_("Thiết bị này không hợp lệ để thanh lý."))
+            equipment = record.equipment_id
+            if equipment.state in ['assigned', 'liquidated', 'lost']:
+                raise UserError(_(
+                    "Thiết bị '%s' đang ở trạng thái '%s', không thể thực hiện thanh lý."
+                ) % (equipment.display_name, equipment.state))
+            
+            # Kiểm tra bảo trì đang mở
+            active_maint = self.env['company.equipment.maintenance'].search([
+                ('equipment_id', '=', equipment.id),
+                ('state', '=', 'in_progress')
+            ], limit=1)
+            if active_maint:
+                raise UserError(_(
+                    "Không thể phê duyệt thanh lý: Thiết bị '%s' đang có phiếu bảo trì '%s' đang thực hiện."
+                ) % (equipment.display_name, active_maint.name))
             
             # Đổi trạng thái thiết bị thành Đã thanh lý
-            record.equipment_id.write({
+            equipment.write({
                 'state': 'liquidated'
             })
             
@@ -113,10 +144,21 @@ class CompanyEquipmentLiquidation(models.Model):
                 raise UserError(_("Chỉ có thể hủy phiếu đang ở trạng thái Nháp."))
             record.write({'state': 'cancelled'})
 
+    def write(self, vals):
+        """Khóa không cho chỉnh sửa thông tin thanh lý khi phiếu đã duyệt hoặc đã hủy."""
+        protected_fields = {'equipment_id', 'date', 'price', 'purchaser_name', 'reason'}
+        for record in self:
+            if record.state in ['approved', 'cancelled']:
+                modified_protected = set(vals.keys()) & protected_fields
+                if modified_protected:
+                    raise UserError(_(
+                        "Không thể chỉnh sửa thông tin thanh lý (%s) của phiếu đã được phê duyệt hoặc đã hủy."
+                    ) % ", ".join(modified_protected))
+        return super().write(vals)
+
     def unlink(self):
         """Ngăn chặn xóa phiếu thanh lý đã duyệt."""
         for record in self:
-            if record.state != 'draft' and record.state != 'cancelled':
-                raise UserError(_("Không thể xóa phiếu thanh lý đã duyệt."))
+            if record.state not in ['draft', 'cancelled']:
+                raise UserError(_("Không thể xóa phiếu thanh lý đã duyệt (%s).") % record.name)
         return super().unlink()
-
