@@ -1,3 +1,5 @@
+iv
+
 # 📋 Danh Sách Nhiệm Vụ Hoàn Thiện Module (Task List Từ A Đến Z)
 
 > **Tài liệu theo dõi tiến độ nâng cấp module Equipment Management theo yêu cầu từ `REVIEW.md`**
@@ -7,7 +9,7 @@
 
 ## 🎯 Tổng Hợp Tiến Độ
 
-- [x] **Giai đoạn 1: Khóa Vòng Đời & Toàn Vẹn Dữ Liệu ở Backend (Ưu tiên P0)**
+- [X] **Giai đoạn 1: Khóa Vòng Đời & Toàn Vẹn Dữ Liệu ở Backend (Ưu tiên P0)**
 - [ ] **Giai đoạn 2: Ràng Buộc Dữ Liệu & Chuẩn Tiền Tệ (Ưu tiên P1)**
 - [ ] **Giai đoạn 3: Tự Động Hóa Nghiệp Vụ & Audit Trail Chatter (Ưu tiên P1)**
 - [ ] **Giai đoạn 4: Chuẩn Hóa Phân Quyền & Cú Pháp Odoo 19**
@@ -19,26 +21,26 @@
 
 ### Giai đoạn 1: Khóa Vòng Đời & Toàn Vẹn Dữ Liệu ở Backend (P0)
 
-- [x] **1.1 Khóa chặt Model Phiếu Bảo Trì (`models/equipment_maintenance.py`)**
+- [X] **1.1 Khóa chặt Model Phiếu Bảo Trì (`models/equipment_maintenance.py`)**
 
-  - [x] Thêm validation kiểm tra trạng thái đầu vào của thiết bị: Chỉ cho phép tạo bảo trì khi thiết bị ở trạng thái `available` (Trong kho) hoặc `broken` (Hư hỏng).
-  - [x] Chặn đưa thiết bị đang `assigned` (Đang sử dụng), `liquidated` (Đã thanh lý) hoặc `lost` (Mất) vào phiếu bảo trì.
-  - [x] Chống trùng lặp: Ngăn chặn tạo/xác nhận nhiều phiếu bảo trì đang chạy (`in_progress`) cho cùng 1 thiết bị.
-  - [x] Chống "hồi sinh" thiết bị: Khi hoàn thành bảo trì (`action_done`), kiểm tra nếu thiết bị đã bị chuyển trạng thái khác ngoài `maintenance` (như đã thanh lý) thì báo lỗi và dừng thực thi.
-  - [x] Bổ sung Backend Guard `unlink()`: Chỉ cho phép xóa phiếu ở trạng thái `draft` hoặc `cancelled`.
-  - [x] Bổ sung Backend Guard `write()`: Khóa không cho sửa các trường `equipment_id`, `vendor_id`, `request_date`, `cost` khi phiếu không còn là `draft`.
-- [x] **1.2 Khóa chặt Model Phiếu Thanh Lý (`models/equipment_liquidation.py`)**
+  - [X] Thêm validation kiểm tra trạng thái đầu vào của thiết bị: Chỉ cho phép tạo bảo trì khi thiết bị ở trạng thái `available` (Trong kho) hoặc `broken` (Hư hỏng).
+  - [X] Chặn đưa thiết bị đang `assigned` (Đang sử dụng), `liquidated` (Đã thanh lý) hoặc `lost` (Mất) vào phiếu bảo trì.
+  - [X] Chống trùng lặp: Ngăn chặn tạo/xác nhận nhiều phiếu bảo trì đang chạy (`in_progress`) cho cùng 1 thiết bị.
+  - [X] Chống "hồi sinh" thiết bị: Khi hoàn thành bảo trì (`action_done`), kiểm tra nếu thiết bị đã bị chuyển trạng thái khác ngoài `maintenance` (như đã thanh lý) thì báo lỗi và dừng thực thi.
+  - [X] Bổ sung Backend Guard `unlink()`: Chỉ cho phép xóa phiếu ở trạng thái `draft` hoặc `cancelled`.
+  - [X] Bổ sung Backend Guard `write()`: Khóa không cho sửa các trường `equipment_id`, `vendor_id`, `request_date`, `cost` khi phiếu không còn là `draft`.
+- [X] **1.2 Khóa chặt Model Phiếu Thanh Lý (`models/equipment_liquidation.py`)**
 
-  - [x] Thêm validation chặn thanh lý nếu thiết bị đang có phiếu bảo trì mở (`in_progress`). Bắt buộc phải hoàn tất hoặc hủy bảo trì trước.
-  - [x] Bổ sung Backend Guard `unlink()`: Ngăn xóa phiếu đã duyệt (`approved`).
-  - [x] Bổ sung Backend Guard `write()`: Khóa không cho sửa thông tin thiết bị, ngày thanh lý, giá bán khi phiếu đã ở trạng thái `approved`.
-- [x] **1.3 Khóa chặt Model Phiếu Cấp Phát (`models/allocation.py`)**
+  - [X] Thêm validation chặn thanh lý nếu thiết bị đang có phiếu bảo trì mở (`in_progress`). Bắt buộc phải hoàn tất hoặc hủy bảo trì trước.
+  - [X] Bổ sung Backend Guard `unlink()`: Ngăn xóa phiếu đã duyệt (`approved`).
+  - [X] Bổ sung Backend Guard `write()`: Khóa không cho sửa thông tin thiết bị, ngày thanh lý, giá bán khi phiếu đã ở trạng thái `approved`.
+- [X] **1.3 Khóa chặt Model Phiếu Cấp Phát (`models/allocation.py`)**
 
-  - [x] Bổ sung Backend Guard `unlink()`: Chỉ cho phép xóa phiếu `draft`. Nghiêm cấm xóa phiếu đã xác nhận (`confirmed`) hoặc đã thu hồi (`returned`) để bảo vệ chứng từ gốc.
-  - [x] Bổ sung Backend Guard `write()`: Chặn chỉnh sửa `equipment_id`, `employee_id`, `date` khi phiếu đã xác nhận (`confirmed`).
-- [x] **1.4 Khóa chặt Model Phiếu Thu Hồi (`models/equipment_return.py`)**
+  - [X] Bổ sung Backend Guard `unlink()`: Chỉ cho phép xóa phiếu `draft`. Nghiêm cấm xóa phiếu đã xác nhận (`confirmed`) hoặc đã thu hồi (`returned`) để bảo vệ chứng từ gốc.
+  - [X] Bổ sung Backend Guard `write()`: Chặn chỉnh sửa `equipment_id`, `employee_id`, `date` khi phiếu đã xác nhận (`confirmed`).
+- [X] **1.4 Khóa chặt Model Phiếu Thu Hồi (`models/equipment_return.py`)**
 
-  - [x] Bổ sung Backend Guard `write()`: Chặn chỉnh sửa dữ liệu khi phiếu đã xác nhận hoàn thành (`returned`) hoặc `cancelled`.
+  - [X] Bổ sung Backend Guard `write()`: Chặn chỉnh sửa dữ liệu khi phiếu đã xác nhận hoàn thành (`returned`) hoặc `cancelled`.
 
 ---
 

@@ -1,10 +1,28 @@
-from odoo import api, fields, models
+from odoo import api, fields, models, _
+from odoo.exceptions import ValidationError
 
 
 class CompanyEquipment(models.Model):
     _name = "company.equipment"
     _description = "Thiết bị công ty"
     _rec_name = "name"
+
+    _unique_equipment_code = models.Constraint('UNIQUE(code)', 'Mã thiết bị phải là duy nhất!')
+    _unique_serial_number = models.Constraint('UNIQUE(serial_number)', 'Số Serial phải là duy nhất!')
+
+    company_id = fields.Many2one(
+        'res.company',
+        string="Công ty",
+        default=lambda self: self.env.company,
+        required=True,
+    )
+
+    currency_id = fields.Many2one(
+        'res.currency',
+        string="Tiền tệ",
+        default=lambda self: self.env.company.currency_id,
+        required=True,
+    )
 
     # --- Thông tin cơ bản ---
     name = fields.Char(
@@ -29,8 +47,9 @@ class CompanyEquipment(models.Model):
         string="Ngày mua",
     )
 
-    purchase_price = fields.Float(
+    purchase_price = fields.Monetary(
         string="Giá mua",
+        currency_field='currency_id',
     )
 
     state = fields.Selection(
@@ -73,14 +92,16 @@ class CompanyEquipment(models.Model):
         default=5,
     )
 
-    salvage_value = fields.Float(
+    salvage_value = fields.Monetary(
         string="Giá trị thu hồi dự kiến",
+        currency_field='currency_id',
         default=0,
     )
 
     # --- Các trường tính toán khấu hao tự động ---
-    annual_depreciation = fields.Float(
+    annual_depreciation = fields.Monetary(
         string="Khấu hao mỗi năm",
+        currency_field='currency_id',
         compute="_compute_annual_depreciation",
         store=True,
         compute_sudo=True,
@@ -93,13 +114,15 @@ class CompanyEquipment(models.Model):
         compute_sudo=True,
     )
 
-    accumulated_depreciation = fields.Float(
+    accumulated_depreciation = fields.Monetary(
         string="Khấu hao lũy kế",
+        currency_field='currency_id',
         compute="_compute_accumulated_depreciation",
     )
 
-    remaining_value = fields.Float(
+    remaining_value = fields.Monetary(
         string="Giá trị còn lại",
+        currency_field='currency_id',
         compute="_compute_accumulated_depreciation",
     )
 
@@ -131,6 +154,19 @@ class CompanyEquipment(models.Model):
             max_depreciation = max(record.purchase_price - record.salvage_value, 0.0)
             record.accumulated_depreciation = min(max(accumulated, 0.0), max_depreciation)
             record.remaining_value = max(record.purchase_price - record.accumulated_depreciation, record.salvage_value)
+
+    @api.constrains('purchase_price', 'salvage_value', 'useful_life_years')
+    def _check_financial_data(self):
+        """Kiểm tra tính hợp lệ của các số liệu tài chính."""
+        for record in self:
+            if record.purchase_price < 0:
+                raise ValidationError(_("Giá mua không được là số âm."))
+            if record.salvage_value < 0:
+                raise ValidationError(_("Giá trị thu hồi dự kiến không được là số âm."))
+            if record.salvage_value > record.purchase_price:
+                raise ValidationError(_("Giá trị thu hồi dự kiến không được lớn hơn Giá mua."))
+            if record.useful_life_years <= 0:
+                raise ValidationError(_("Thời gian khấu hao phải lớn hơn 0."))
 
     # --- Lịch sử liên kết ---
     maintenance_ids = fields.One2many(
