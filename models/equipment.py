@@ -17,16 +17,10 @@ class CompanyEquipment(models.Model):
         required=True,
     )
 
-    def _default_currency_id(self):
-        vnd = self.env.ref('base.VND', raise_if_not_found=False) or self.env['res.currency'].search([('name', '=', 'VND')], limit=1)
-        if vnd and not vnd.active:
-            vnd.sudo().write({'active': True})
-        return vnd or self.env.company.currency_id
-
     currency_id = fields.Many2one(
         'res.currency',
         string="Tiền tệ",
-        default=_default_currency_id,
+        default=lambda self: self.env.company.currency_id,
         required=True,
     )
 

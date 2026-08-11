@@ -13,12 +13,12 @@ Hệ thống được thiết kế với cơ chế chặn lỗi ngay từ vòng 
 ```mermaid
 graph TD
     User([Người dùng nhập liệu]) --> Input[Form Thiết Bị / Bảo Trì / Thanh Lý]
-    
+  
     Input -->|Lưu Data| ORM[Lớp 1: ORM api.constrains]
-    
+  
     ORM -->|Giá âm, Lỗi Logic| Block1[BẬT LỖI GIAO DIỆN & CHẶN]
     ORM -->|Hợp lệ Logic| DB[Lớp 2: Database Constraints]
-    
+  
     DB -->|Trùng Code / Serial| Block2[BẬT LỖI DATABASE & CHẶN]
     DB -->|Duy nhất| Success[(Lưu vào Database thành công)]
 
@@ -75,11 +75,11 @@ graph TD
 
 File test đóng vai trò như một **"Kế toán viên cực đoan"** cố tình nhập sai mọi số liệu để ép hệ thống phải sập:
 
-| Hàm Test | Kịch bản Kế toán viên thực hiện | Phản ứng mong đợi từ Hệ thống |
-| :--- | :--- | :--- |
-| **`test_01_equipment_unique_code_and_serial`** | Cố tình tạo thiết bị mới có trùng mã `EQ-P2-001` hoặc trùng Serial với máy cũ. | 🛑 Database chặn đứng với lỗi `Exception` (UniqueViolation). |
-| **`test_02_equipment_financial_constraints`** | Cố tình nhập giá mua âm, giá thu hồi âm, hoặc cho máy chạy khấu hao 0 năm. | 🛑 ORM chặn đứng với lỗi `ValidationError`. |
-| **`test_03_maintenance_constraints`** | Làm phiếu sửa chữa với giá âm, và báo cáo hoàn thành sửa chữa vào... ngày hôm qua. | 🛑 Bị văng lỗi `ValidationError` ngay khi bấm lưu. |
-| **`test_04_liquidation_constraints`** | Bán thanh lý xác máy tính với giá âm (trả thêm tiền cho người mua). | 🛑 Bị văng lỗi `ValidationError`. |
+| Hàm Test                                              | Kịch bản Kế toán viên thực hiện                                                              | Phản ứng mong đợi từ Hệ thống                               |
+| :----------------------------------------------------- | :-------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------- |
+| **`test_01_equipment_unique_code_and_serial`** | Cố tình tạo thiết bị mới có trùng mã`EQ-P2-001` hoặc trùng Serial với máy cũ.       | 🛑 Database chặn đứng với lỗi`Exception` (UniqueViolation). |
+| **`test_02_equipment_financial_constraints`**  | Cố tình nhập giá mua âm, giá thu hồi âm, hoặc cho máy chạy khấu hao 0 năm.             | 🛑 ORM chặn đứng với lỗi`ValidationError`.                  |
+| **`test_03_maintenance_constraints`**          | Làm phiếu sửa chữa với giá âm, và báo cáo hoàn thành sửa chữa vào... ngày hôm qua. | 🛑 Bị văng lỗi`ValidationError` ngay khi bấm lưu.           |
+| **`test_04_liquidation_constraints`**          | Bán thanh lý xác máy tính với giá âm (trả thêm tiền cho người mua).                    | 🛑 Bị văng lỗi`ValidationError`.                              |
 
 > 🏆 **Tất cả 4/4 kịch bản kiểm thử đều PASS xuất sắc, bảo đảm nền tảng vững chắc cho các chức năng liên quan đến tiền bạc sau này.**

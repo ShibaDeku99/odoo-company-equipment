@@ -1,6 +1,8 @@
+ nhàmin xlal
+
 # 📘 BÁO CÁO TỔNG KẾT GIAI ĐOẠN 1: KHÓA VÒNG ĐỜI & TOÀN VẸN DỮ LIỆU BACKEND (P0)
 
-> **Module**: `equipment_management` (Odoo 19.0)  
+> **Module**: `equipment_management` (Odoo 19.0)
 > **Cơ chế cốt lõi**: **Bảo vệ 2 Lớp Kép (Double Guard)** — Kết hợp giữa Lọc tự động trên Giao diện (UI Domain Filter) và Khóa chặn tuyệt đối ở Tầng Backend (Python Guard).
 
 ---
@@ -91,13 +93,13 @@ graph TD
 
 File test hoạt động như một **"Robot kiểm thử tự động"** mô phỏng người dùng cố tình lách qua giao diện UI để kiểm tra xem tầng Backend có chặn đúng 100% hay không:
 
-| Hàm Test | Kịch bản Robot thực hiện | Phản ứng mong đợi từ Backend |
-| :--- | :--- | :--- |
-| **`test_01_allocation_guards`** | Đã cấp phát máy ➡️ Robot cố tình gọi hàm Xóa (`unlink`) hoặc Sửa người nhận (`write`). | 🛑 Bị chặn lại với lỗi `UserError`. |
-| **`test_02_maintenance_input_validation`** | Robot cố tình gửi máy đang giao nhân viên hoặc máy đã thanh lý đi bảo trì. | 🛑 Bị chặn lại với lỗi `UserError` / `ValidationError`. |
-| **`test_03_maintenance_concurrency_and_guards`** | Máy đang sửa ➡️ Robot cố tình tạo thêm phiếu sửa thứ 2, hoặc thử xóa phiếu khi đang sửa. | 🛑 Bị chặn tạo trùng và chặn xóa. |
-| **`test_04_liquidation_guards_and_maint_check`** | Máy đang sửa ➡️ Robot cố tình tạo phiếu thanh lý, hoặc thử sửa giá bán phiếu đã duyệt. | 🛑 Bị chặn thanh lý và chặn sửa giá. |
-| **`test_05_return_guards`** | Thu hồi máy xong ➡️ Robot cố tình xóa hoặc sửa phiếu thu hồi. | 🛑 Bị chặn lại với lỗi `UserError`. |
+| Hàm Test                                                | Kịch bản Robot thực hiện                                                                                | Phản ứng mong đợi từ Backend                               |
+| :------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------- |
+| **`test_01_allocation_guards`**                  | Đã cấp phát máy ➡️ Robot cố tình gọi hàm Xóa (`unlink`) hoặc Sửa người nhận (`write`). | 🛑 Bị chặn lại với lỗi`UserError`.                       |
+| **`test_02_maintenance_input_validation`**       | Robot cố tình gửi máy đang giao nhân viên hoặc máy đã thanh lý đi bảo trì.                   | 🛑 Bị chặn lại với lỗi`UserError` / `ValidationError`. |
+| **`test_03_maintenance_concurrency_and_guards`** | Máy đang sửa ➡️ Robot cố tình tạo thêm phiếu sửa thứ 2, hoặc thử xóa phiếu khi đang sửa.  | 🛑 Bị chặn tạo trùng và chặn xóa.                        |
+| **`test_04_liquidation_guards_and_maint_check`** | Máy đang sửa ➡️ Robot cố tình tạo phiếu thanh lý, hoặc thử sửa giá bán phiếu đã duyệt.   | 🛑 Bị chặn thanh lý và chặn sửa giá.                     |
+| **`test_05_return_guards`**                      | Thu hồi máy xong ➡️ Robot cố tình xóa hoặc sửa phiếu thu hồi.                                    | 🛑 Bị chặn lại với lỗi`UserError`.                       |
 
 > 💡 **Tính an toàn**: Bộ test kế thừa từ `TransactionCase` nên toàn bộ dữ liệu mẫu đều tự động Rollback (hủy bỏ) 100% sau khi test xong, không sinh rác ra Database.
 
@@ -112,6 +114,7 @@ Mở Terminal tại thư mục gốc Odoo (`d:\odoo_19.0.20260720.tar\odoo-19.0.
 ```
 
 **Kết quả kiểm thử thực tế:**
+
 ```text
 INFO odoo19: Starting TestEquipmentPhase1Guards.test_01_allocation_guards ... [PASSED]
 INFO odoo19: Starting TestEquipmentPhase1Guards.test_02_maintenance_input_validation ... [PASSED]
