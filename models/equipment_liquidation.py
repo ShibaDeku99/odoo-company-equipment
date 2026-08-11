@@ -14,6 +14,26 @@ class CompanyEquipmentLiquidation(models.Model):
         default=lambda self: _('New')
     )
     
+    company_id = fields.Many2one(
+        'res.company',
+        string="Công ty",
+        default=lambda self: self.env.company,
+        required=True,
+    )
+
+    def _default_currency_id(self):
+        vnd = self.env.ref('base.VND', raise_if_not_found=False) or self.env['res.currency'].search([('name', '=', 'VND')], limit=1)
+        if vnd and not vnd.active:
+            vnd.sudo().write({'active': True})
+        return vnd or self.env.company.currency_id
+
+    currency_id = fields.Many2one(
+        'res.currency',
+        string="Tiền tệ",
+        default=_default_currency_id,
+        required=True,
+    )
+
     equipment_id = fields.Many2one(
         'company.equipment', 
         string="Thiết bị", 
@@ -38,8 +58,9 @@ class CompanyEquipmentLiquidation(models.Model):
         default='old'
     )
     
-    price = fields.Float(
-        string="Giá thanh lý / Số tiền thu hồi"
+    price = fields.Monetary(
+        string="Giá thanh lý / Số tiền thu hồi",
+        currency_field='currency_id',
     )
     
     purchaser_name = fields.Char(
@@ -60,6 +81,13 @@ class CompanyEquipmentLiquidation(models.Model):
         default='draft', 
         required=True
     )
+
+    @api.constrains('price')
+    def _check_price(self):
+        """Kiểm tra giá thanh lý không được là số âm."""
+        for record in self:
+            if record.price < 0:
+                raise ValidationError(_("Giá thanh lý / Số tiền thu hồi không được là số âm."))
 
     @api.constrains('equipment_id', 'state')
     def _check_equipment(self):

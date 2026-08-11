@@ -13,6 +13,26 @@ class CompanyEquipmentMaintenance(models.Model):
         readonly=True, 
         default=lambda self: _('New')
     )
+
+    company_id = fields.Many2one(
+        'res.company',
+        string="Công ty",
+        default=lambda self: self.env.company,
+        required=True,
+    )
+
+    def _default_currency_id(self):
+        vnd = self.env.ref('base.VND', raise_if_not_found=False) or self.env['res.currency'].search([('name', '=', 'VND')], limit=1)
+        if vnd and not vnd.active:
+            vnd.sudo().write({'active': True})
+        return vnd or self.env.company.currency_id
+
+    currency_id = fields.Many2one(
+        'res.currency',
+        string="Tiền tệ",
+        default=_default_currency_id,
+        required=True,
+    )
     
     equipment_id = fields.Many2one(
         'company.equipment', 
@@ -36,8 +56,9 @@ class CompanyEquipmentMaintenance(models.Model):
         string="Ngày hoàn thành"
     )
     
-    cost = fields.Float(
-        string="Chi phí sửa chữa"
+    cost = fields.Monetary(
+        string="Chi phí sửa chữa",
+        currency_field='currency_id',
     )
     
     description = fields.Text(
@@ -55,6 +76,14 @@ class CompanyEquipmentMaintenance(models.Model):
         default='draft', 
         required=True
     )
+
+    @api.constrains('cost', 'request_date', 'completion_date')
+    def _check_maintenance_data(self):
+        for record in self:
+            if record.cost < 0:
+                raise ValidationError(_("Chi phí sửa chữa không được là số âm."))
+            if record.completion_date and record.request_date and record.completion_date < record.request_date:
+                raise ValidationError(_("Ngày hoàn thành không được nhỏ hơn Ngày yêu cầu."))
 
     @api.constrains('equipment_id', 'state')
     def _check_equipment_state(self):
