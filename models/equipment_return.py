@@ -3,6 +3,7 @@ from odoo.exceptions import UserError, ValidationError
 
 class CompanyEquipmentReturn(models.Model):
     _name = "company.equipment.return"
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Phiếu thu hồi thiết bị"
     _rec_name = "name"
 
@@ -56,7 +57,7 @@ class CompanyEquipmentReturn(models.Model):
             ('broken', 'Hư hỏng'),
             ('lost', 'Mất'),
         ], 
-        string="Tình trạng khi thu hồi", 
+        string="Tình trạng khi thu hồi", tracking=True,
         required=True, 
         default='good'
     )
@@ -69,10 +70,26 @@ class CompanyEquipmentReturn(models.Model):
             ('returned', 'Đã thu hồi'),
             ('cancelled', 'Đã hủy'),
         ], 
-        string="Trạng thái", 
+        string="Trạng thái", tracking=True,
         default='draft', 
         required=True
     )
+
+    maintenance_ids = fields.One2many(
+        'company.equipment.maintenance',
+        'return_id',
+        string="Danh sách bảo trì"
+    )
+
+    maintenance_count = fields.Integer(
+        string="Số phiếu bảo trì",
+        compute='_compute_maintenance_count'
+    )
+
+    @api.depends('maintenance_ids')
+    def _compute_maintenance_count(self):
+        for record in self:
+            record.maintenance_count = len(record.maintenance_ids)
 
     @api.constrains('date', 'allocation_id')
     def _check_date(self):
@@ -145,6 +162,15 @@ class CompanyEquipmentReturn(models.Model):
             
             # 3. Cập nhật phiếu thu hồi
             record.write({'state': 'returned'})
+            
+            # 4. Tự động sinh phiếu bảo trì nếu tình trạng là Cần bảo trì
+            if record.condition == 'maintenance':
+                self.env['company.equipment.maintenance'].create({
+                    'equipment_id': record.equipment_id.id,
+                    'request_date': record.date,
+                    'return_id': record.id,
+                    'state': 'draft',
+                })
 
     def action_cancel(self):
         """Hủy phiếu thu hồi (chỉ áp dụng cho phiếu ở trạng thái Nháp)."""
@@ -171,3 +197,11 @@ class CompanyEquipmentReturn(models.Model):
             if record.state not in ['draft', 'cancelled']:
                 raise UserError(_("Bạn không thể xóa phiếu thu hồi đã xác nhận (%s). Vui lòng hủy phiếu nếu cần.") % record.name)
         return super().unlink()
+
+    def action_view_maintenance(self):
+        """Mở danh sách các phiếu bảo trì được tạo từ phiếu thu hồi này."""
+        self.ensure_one()
+        action = self.env["ir.actions.actions"]._for_xml_id("equipment_management.action_equipment_maintenance")
+        action['domain'] = [('return_id', '=', self.id)]
+        action['context'] = {'default_return_id': self.id, 'default_equipment_id': self.equipment_id.id}
+        return action

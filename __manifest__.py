@@ -7,7 +7,7 @@
     "description": """
         Module quản lý thiết bị công ty (Company Equipment).
     """,
-    "depends": ["base", "hr"],
+    "depends": ["base", "hr", "mail"],
     "data": [
         "security/equipment_security.xml",
         "security/ir.model.access.csv",

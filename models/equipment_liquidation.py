@@ -3,6 +3,7 @@ from odoo.exceptions import UserError, ValidationError
 
 class CompanyEquipmentLiquidation(models.Model):
     _name = "company.equipment.liquidation"
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Phiếu thanh lý thiết bị"
     _rec_name = "name"
 
@@ -53,7 +54,7 @@ class CompanyEquipmentLiquidation(models.Model):
     )
     
     price = fields.Monetary(
-        string="Giá thanh lý / Số tiền thu hồi",
+        string="Giá thanh lý / Số tiền thu hồi", tracking=True,
         currency_field='currency_id',
     )
     
@@ -71,7 +72,7 @@ class CompanyEquipmentLiquidation(models.Model):
             ('approved', 'Đã duyệt'),
             ('cancelled', 'Đã hủy'),
         ], 
-        string="Trạng thái", 
+        string="Trạng thái", tracking=True,
         default='draft', 
         required=True
     )

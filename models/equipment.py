@@ -4,6 +4,7 @@ from odoo.exceptions import ValidationError
 
 class CompanyEquipment(models.Model):
     _name = "company.equipment"
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Thiết bị công ty"
     _rec_name = "name"
 
@@ -48,7 +49,7 @@ class CompanyEquipment(models.Model):
     )
 
     purchase_price = fields.Monetary(
-        string="Giá mua",
+        string="Giá mua", tracking=True,
         currency_field='currency_id',
     )
 
@@ -61,7 +62,7 @@ class CompanyEquipment(models.Model):
             ("liquidated", "Đã thanh lý"),
             ("lost", "Mất"),
         ],
-        string="Trạng thái",
+        string="Trạng thái", tracking=True,
         default="available",
         required=True,
     )
@@ -73,7 +74,7 @@ class CompanyEquipment(models.Model):
     # --- Thông tin sử dụng (Chỉ cập nhật qua Cấp phát / Thu hồi) ---
     employee_id = fields.Many2one(
         'hr.employee',
-        string="Người sử dụng",
+        string="Người sử dụng", tracking=True,
         readonly=True,
     )
 
