@@ -169,6 +169,7 @@ class CompanyEquipmentReturn(models.Model):
                     'equipment_id': record.equipment_id.id,
                     'request_date': record.date,
                     'return_id': record.id,
+                    'description': record.note,
                     'state': 'draft',
                 })
 
@@ -201,7 +202,7 @@ class CompanyEquipmentReturn(models.Model):
     def action_view_maintenance(self):
         """Mở danh sách các phiếu bảo trì được tạo từ phiếu thu hồi này."""
         self.ensure_one()
-        action = self.env["ir.actions.actions"]._for_xml_id("equipment_management.action_equipment_maintenance")
+        action = self.env["ir.actions.actions"]._for_xml_id("equipment_management.action_company_equipment_maintenance")
         action['domain'] = [('return_id', '=', self.id)]
         action['context'] = {'default_return_id': self.id, 'default_equipment_id': self.equipment_id.id}
         return action
