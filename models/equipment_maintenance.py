@@ -3,8 +3,11 @@ from odoo.exceptions import UserError, ValidationError
 
 class CompanyEquipmentMaintenance(models.Model):
     _name = "company.equipment.maintenance"
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Phiếu bảo trì thiết bị"
     _rec_name = "name"
+
+    return_id = fields.Many2one('company.equipment.return', string="Phiếu thu hồi gốc", readonly=True)
 
     name = fields.Char(
         string="Mã phiếu", 
@@ -51,7 +54,7 @@ class CompanyEquipmentMaintenance(models.Model):
     )
     
     cost = fields.Monetary(
-        string="Chi phí sửa chữa",
+        string="Chi phí sửa chữa", tracking=True,
         currency_field='currency_id',
     )
     
@@ -66,7 +69,7 @@ class CompanyEquipmentMaintenance(models.Model):
             ('done', 'Đã hoàn thành'),
             ('cancelled', 'Đã hủy'),
         ], 
-        string="Trạng thái", 
+        string="Trạng thái", tracking=True,
         default='draft', 
         required=True
     )
