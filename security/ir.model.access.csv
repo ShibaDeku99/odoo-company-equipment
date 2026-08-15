@@ -2,6 +2,7 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_equipment_base,company.equipment,model_company_equipment,base.group_user,1,0,0,0
 access_allocation_base,company.equipment.allocation,model_company_equipment_allocation,base.group_user,1,0,0,0
 access_return_base,company.equipment.return,model_company_equipment_return,base.group_user,1,0,0,0
+access_maintenance_base,company.equipment.maintenance,model_company_equipment_maintenance,base.group_user,1,0,0,0
 
 access_equipment_user,company.equipment,model_company_equipment,equipment_management.group_equipment_user,1,1,1,1
 access_allocation_user,company.equipment.allocation,model_company_equipment_allocation,equipment_management.group_equipment_user,1,1,1,1

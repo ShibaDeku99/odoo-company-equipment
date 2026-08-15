@@ -27,7 +27,7 @@
                 <header>
                     <button name="action_confirm" string="Xác nhận bảo trì" type="object" class="oe_highlight" invisible="state != 'draft'"/>
                     <button name="action_done" string="Hoàn thành" type="object" class="oe_highlight" invisible="state != 'in_progress'"/>
-                    <button name="action_cancel" string="Hủy phiếu" type="object" invisible="state not in ('draft', 'in_progress')"/>
+                    <button name="action_cancel" string="Hủy phiếu" type="object" invisible="state not in ['draft', 'in_progress']"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,done"/>
                 </header>
                 <sheet>

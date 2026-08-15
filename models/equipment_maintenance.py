@@ -192,8 +192,8 @@ class CompanyEquipmentMaintenance(models.Model):
             if record.state == 'done':
                 raise UserError(_("Không thể hủy phiếu bảo trì đã hoàn thành."))
             
-            # Nếu đang bảo trì mà hủy, trả thiết bị về Trong kho nếu vẫn đang ở maintenance
-            if record.state == 'in_progress' and record.equipment_id.state == 'maintenance':
+            # Nếu đang bảo trì hoặc phiếu nháp sinh ra từ Thu hồi mà hủy, trả thiết bị về Trong kho
+            if record.state in ['draft', 'in_progress'] and record.equipment_id.state == 'maintenance':
                 record.equipment_id.write({
                     'state': 'available'
                 })

@@ -26,6 +26,7 @@
     <menuitem id="menu_maintenance_app"
               name="Bảo trì"
               parent="menu_equipment_root"
+              groups="equipment_management.group_equipment_user"
               sequence="40"/>
 
     <menuitem id="menu_liquidation_app"
