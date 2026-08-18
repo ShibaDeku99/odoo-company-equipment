@@ -10,7 +10,7 @@ iv
 ## 🎯 Tổng Hợp Tiến Độ
 
 - [X] **Giai đoạn 1: Khóa Vòng Đời & Toàn Vẹn Dữ Liệu ở Backend (Ưu tiên P0)**
-- [ ] **Giai đoạn 2: Ràng Buộc Dữ Liệu & Chuẩn Tiền Tệ (Ưu tiên P1)**
+- [X] **Giai đoạn 2: Ràng Buộc Dữ Liệu & Chuẩn Tiền Tệ (Ưu tiên P1)**
 - [ ] **Giai đoạn 3: Tự Động Hóa Nghiệp Vụ & Audit Trail Chatter (Ưu tiên P1)**
 - [ ] **Giai đoạn 4: Chuẩn Hóa Phân Quyền & Cú Pháp Odoo 19**
 - [ ] **Giai đoạn 5: Xây Dựng Bộ Test Tự Động Toàn Diện (Automated Unit Tests)**
@@ -46,21 +46,21 @@ iv
 
 ### Giai đoạn 2: Ràng Buộc Dữ Liệu & Chuẩn Tiền Tệ (P1)
 
-- [ ] **2.1 Chuẩn hóa Model Thiết Bị (`models/equipment.py`)**
+- [X] **2.1 Chuẩn hóa Model Thiết Bị (`models/equipment.py`)**
 
-  - [ ] Thêm `_sql_constraints`:
+  - [X] Thêm `_sql_constraints`:
     - `unique_equipment_code`: Ràng buộc Unique cho Mã thiết bị (`code`).
     - `unique_serial_number`: Ràng buộc Unique cho Số Serial (`serial_number`).
-  - [ ] Thêm `@api.constrains`:
+  - [X] Thêm `@api.constrains`:
     - Giá mua không âm (`purchase_price >= 0`).
     - Giá trị thu hồi hợp lệ (`salvage_value >= 0` và `salvage_value <= purchase_price`).
     - Thời gian khấu hao hợp lệ (`useful_life_years > 0`).
-  - [ ] Thêm trường `currency_id` (`res.currency`) mặc định theo công ty hiện tại.
-  - [ ] Chuyển các trường tiền tệ từ `Float` sang `Monetary`: `purchase_price`, `salvage_value`, `annual_depreciation`, `accumulated_depreciation`, `remaining_value`.
-- [ ] **2.2 Chuẩn hóa Model Bảo Trì & Thanh Lý**
+  - [X] Thêm trường `currency_id` (`res.currency`) mặc định theo công ty hiện tại.
+  - [X] Chuyển các trường tiền tệ từ `Float` sang `Monetary`: `purchase_price`, `salvage_value`, `annual_depreciation`, `accumulated_depreciation`, `remaining_value`.
+- [X] **2.2 Chuẩn hóa Model Bảo Trì & Thanh Lý**
 
-  - [ ] `equipment_maintenance.py`: Thêm ràng buộc `cost >= 0` và `completion_date >= request_date`. Thêm `currency_id` và đổi `cost` sang `Monetary`.
-  - [ ] `equipment_liquidation.py`: Thêm ràng buộc `price >= 0`. Thêm `currency_id` và đổi `price` sang `Monetary`.
+  - [X] `equipment_maintenance.py`: Thêm ràng buộc `cost >= 0` và `completion_date >= request_date`. Thêm `currency_id` và đổi `cost` sang `Monetary`.
+  - [X] `equipment_liquidation.py`: Thêm ràng buộc `price >= 0`. Thêm `currency_id` và đổi `price` sang `Monetary`.
 
 ---
 
